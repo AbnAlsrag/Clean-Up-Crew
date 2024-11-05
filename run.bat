@@ -1,0 +1,1 @@
+python build.py && bin\debug\CUC.exe && cls
