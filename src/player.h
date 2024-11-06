@@ -6,10 +6,10 @@
 #include <stdint.h>
 
 typedef struct player_t {
-    vector2_t position;
+    vec2f_t position;
     size_t current_room;
 } player_t;
 
-player_t create_player(vector2_t pos);
+player_t create_player(vec2f_t pos);
 
 #endif // _PLAYER_H_

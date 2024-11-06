@@ -27,7 +27,7 @@ for file in tmp:
 
 DEBUG_FLAGS = "-g -O0 -DDEBUG_BUILD"
 DEV_FLAGS = "-g -O2 -DDEV_BUILD"
-RELEASE_FLAGS = "-03 -flto -DRELEASE_BUILD"
+RELEASE_FLAGS = "-O3 -flto -DRELEASE_BUILD"
 
 if MODE == "debug":
     CFLAGS = DEBUG_FLAGS + " " + CFLAGS

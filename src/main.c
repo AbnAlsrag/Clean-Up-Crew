@@ -312,17 +312,29 @@ int main(void) {
 
     init_render_contex();
 
-    player_t player0 = create_player((vector2_t) { .x = 100, .y = 100});
-    player_t player1 = create_player((vector2_t) { .x = 100, .y = 100});
+    player_t player0 = create_player((vec2f_t) { .x = 100, .y = 100});
+    player_t player1 = create_player((vec2f_t) { .x = 100, .y = 100});
+    player_t player2 = create_player((vec2f_t) { .x = 100, .y = 100});
+    player_t player3 = create_player((vec2f_t) { .x = 100, .y = 100});
 
-    viewport_t viewport1 = create_viewport((rectangle_t) { .x = 0, .y = 0, .width = GetScreenWidth()/2, .height = GetScreenHeight() }, &player0);
-    viewport_t viewport2 = create_viewport((rectangle_t) { .x = GetScreenWidth()/2, .y = 0, .width = GetScreenWidth()/2, .height = GetScreenHeight() }, &player1);
+    viewport_t viewport1 = create_viewport(&player0);
+    viewport_t viewport2 = create_viewport(&player1);
+    viewport_t viewport3 = create_viewport(&player2);
+    viewport_t viewport4 = create_viewport(&player3);
+
+    (void)viewport2;
+    (void)viewport1;
+    (void)viewport3;
+    (void)viewport4;
 
     (void)renderer_register_viewport(viewport1);
-    (void)renderer_register_viewport(viewport2);
+    // (void)renderer_register_viewport(viewport2);
+    // (void)renderer_register_viewport(viewport3);
+    // (void)renderer_register_viewport(viewport4);
 
     float movement_speed = 500.0f;
 
+    size_t counter = 0;
     while (!WindowShouldClose()) {
         renderer_update();
 
@@ -331,7 +343,24 @@ int main(void) {
         if (IsKeyDown(KEY_W)) player0.position.y -= movement_speed * GetFrameTime();
         if (IsKeyDown(KEY_S)) player0.position.y += movement_speed * GetFrameTime();
 
-        player0.position = Vector2Normalize(player0.position);
+        if (IsKeyDown(KEY_LEFT)) player1.position.x -= movement_speed * GetFrameTime();
+        if (IsKeyDown(KEY_RIGHT)) player1.position.x += movement_speed * GetFrameTime();
+        if (IsKeyDown(KEY_UP)) player1.position.y -= movement_speed * GetFrameTime();
+        if (IsKeyDown(KEY_DOWN)) player1.position.y += movement_speed * GetFrameTime();
+
+        if (IsKeyPressed(KEY_SEMICOLON)) {
+            if (counter == 0) {
+                (void)renderer_register_viewport(viewport2);
+            } else if (counter == 1) {
+                (void)renderer_register_viewport(viewport3);
+            } else if (counter == 2) {
+                (void)renderer_register_viewport(viewport4);
+            }
+
+            counter++;
+        }
+
+        // player0.position = Vector2Normalize(player0.position);
     }
 
     deinit_render_contex();
