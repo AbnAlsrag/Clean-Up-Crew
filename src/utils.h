@@ -1,6 +1,7 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
+#include <stdint.h>
 #include <raylib/raylib.h>
 
 #ifdef DEBUG_BUILD
@@ -21,5 +22,14 @@ float lerpf(float a, float b, float t);
 vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t slerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t cartesian2polarfv2(vec2f_t vec);
+
+/////////////////////////////////////////////////////////////////////////////
+// STRINGS
+/////////////////////////////////////////////////////////////////////////////
+
+typedef struct string_t {
+    char *characters;
+    size_t len;
+} string_t;
 
 #endif // _UTILS_H_

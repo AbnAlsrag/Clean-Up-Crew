@@ -20,8 +20,8 @@ void init_render_contex(void) {
     SetTraceLogLevel(LOG_ALL);
     #endif
     
+    // SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_VSYNC_HINT);
     SetConfigFlags(FLAG_WINDOW_UNDECORATED);
-    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Clean Up Crew");
     // SetExitKey(KEY_NULL);
     // SetTargetFPS(60);
@@ -126,14 +126,36 @@ void compute_viewport_rects(void) {
     }
 }
 
-bool renderer_register_viewport(viewport_t viewport) {
+bool renderer_register_viewport(viewport_t viewport, uint8_t *out_id) {
     if (renderer.viewport_count >= MAX_VIEWPORTS) {
         TraceLog(LOG_WARNING, "Max viewports reached can't register the given viewport");
         return false;
     }
 
     renderer.viewports[renderer.viewport_count] = viewport;
+
+    if (out_id != NULL) {
+        *out_id = renderer.viewport_count;
+    }
+    
     renderer.viewport_count += 1;
+
+    compute_viewport_rects();
+
+    return true;
+}
+
+bool renderer_unregister_viewport(uint8_t id) {
+    if (id >= renderer.viewport_count) {
+        TraceLog(LOG_WARNING, "Invalid viewport id can't unregister an invalid id");
+        TraceLog(LOG_DEBUG, TextFormat("viewport_count = %d, id = %d", renderer.viewport_count, id));
+        return false;
+    }
+
+    renderer.viewport_count -= 1;
+    for (size_t i = id; i < renderer.viewport_count; i++) {
+        renderer.viewports[i] = renderer.viewports[i+1];
+    }
 
     compute_viewport_rects();
 
@@ -170,13 +192,13 @@ void renderer_update(void) {
                 DrawRectangle(0, 0, width, height, WHITE);
             }
 
-            DrawText(TextFormat("target = "VECTOR2_FMT, VECTOR2_ARG(pos)), 0, 150, 16, GREEN);
-            DrawText(TextFormat("camera = "VECTOR2_FMT, VECTOR2_ARG(viewport->camera.target)), 0, 100, 16, GREEN);
-            DrawText(TextFormat("player = "VECTOR2_FMT, VECTOR2_ARG(viewport->player->position)), 0, 200, 16, GREEN);
-            DrawText(TextFormat("camera_offset = "VECTOR2_FMT, VECTOR2_ARG(viewport->camera.offset)), 0, 250, 16, GREEN);
+            // DrawText(TextFormat("target = "VECTOR2_FMT, VECTOR2_ARG(pos)), 0, 150, 16, GREEN);
+            // DrawText(TextFormat("camera = "VECTOR2_FMT, VECTOR2_ARG(viewport->camera.target)), 0, 100, 16, GREEN);
+            // DrawText(TextFormat("player = "VECTOR2_FMT, VECTOR2_ARG(viewport->player->position)), 0, 200, 16, GREEN);
+            // DrawText(TextFormat("camera_offset = "VECTOR2_FMT, VECTOR2_ARG(viewport->camera.offset)), 0, 250, 16, GREEN);
             DrawRectangleV(viewport->player->position, (vec2f_t) { 100, 100 }, PURPLE);
         EndMode2D();
-            DrawText("hello world", 50, 50, 28, RED);
+            // DrawText("hello world", 50, 50, 28, RED);
         EndTextureMode();
     }
 

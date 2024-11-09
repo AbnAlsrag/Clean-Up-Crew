@@ -3,7 +3,7 @@
 #include <raylib/raymath.h>
 #include <raylib/rlgl.h>
 #include "renderer.h"
-#include "player.h"
+#include "entity.h"
 
 // Custom Blend Modes
 #define RLGL_SRC_ALPHA 0x0302
@@ -312,10 +312,10 @@ int main(void) {
 
     init_render_contex();
 
-    player_t player0 = create_player((vec2f_t) { .x = 100, .y = 100});
-    player_t player1 = create_player((vec2f_t) { .x = 100, .y = 100});
-    player_t player2 = create_player((vec2f_t) { .x = 100, .y = 100});
-    player_t player3 = create_player((vec2f_t) { .x = 100, .y = 100});
+    player_t player0 = create_player((entity_pos_t) { .room_id = 0, .x = 100, .y = 100});
+    player_t player1 = create_player((entity_pos_t) { .room_id = 0, .x = 100, .y = 100});
+    player_t player2 = create_player((entity_pos_t) { .room_id = 0, .x = 100, .y = 100});
+    player_t player3 = create_player((entity_pos_t) { .room_id = 0, .x = 100, .y = 100});
 
     viewport_t viewport1 = create_viewport(&player0);
     viewport_t viewport2 = create_viewport(&player1);
@@ -327,7 +327,7 @@ int main(void) {
     (void)viewport3;
     (void)viewport4;
 
-    (void)renderer_register_viewport(viewport1);
+    (void)renderer_register_viewport(viewport1, NULL);
     // (void)renderer_register_viewport(viewport2);
     // (void)renderer_register_viewport(viewport3);
     // (void)renderer_register_viewport(viewport4);
@@ -350,14 +350,18 @@ int main(void) {
 
         if (IsKeyPressed(KEY_SEMICOLON)) {
             if (counter == 0) {
-                (void)renderer_register_viewport(viewport2);
+                (void)renderer_register_viewport(viewport2, NULL);
             } else if (counter == 1) {
-                (void)renderer_register_viewport(viewport3);
+                (void)renderer_register_viewport(viewport3, NULL);
             } else if (counter == 2) {
-                (void)renderer_register_viewport(viewport4);
+                (void)renderer_register_viewport(viewport4, NULL);
             }
 
             counter++;
+        }
+
+        if (IsKeyPressed(KEY_R)) {
+            (void)renderer_unregister_viewport(0);
         }
 
         // player0.position = Vector2Normalize(player0.position);
