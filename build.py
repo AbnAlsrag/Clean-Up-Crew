@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser(prog=PROJECT_NAME)
 parser.add_argument("-m", "--mode", dest="mode", default="debug", help="Specifies the mode of compilation e.g.(debug, dev, release)")
 parser.add_argument("-t", "--tools", dest="is_tools", action="store_true", help="")
 parser.add_argument("-a", "--all", dest="is_all", action="store_true", help="")
+parser.add_argument("--platform", dest="platform", default="pc", choices=["pc"], help="")
 args = parser.parse_args()
 
 def bundle():
@@ -17,18 +18,33 @@ def bundle():
 MODE = args.mode
 IS_TOOLS = args.is_tools
 IS_ALL = args.is_all
+PLATFORM = args.platform
 OUTPUT = "CUC"
 CC = "gcc"
-LIBS = "-Lexternal/raylib/ -l:libraylibdll.a"
+LIBS = "-Lexternal/raylib/ -l:libraylibdll.a -lm"
+
+def get_platform_src():
+    files = []
+    if PLATFORM == "pc":
+        files = glob.glob("src/platform/pc/**/.c")
+    else:
+        print("unkown platform expected either (pc)")
+        exit(1)
+
+    return files
 
 def build_project():
-    CFLAGS = "-std=c17 -Wall -Werror -pedantic -I src -I external/"
+    CFLAGS = "-std=c17 -Wall -Werror -pedantic -static -I src -I external/"
     TARGET = "bin/" + MODE + "/" + OUTPUT + ".exe"
     FILES = ""
 
     tmp = glob.glob("src/**/*.c", recursive=True)
 
     for file in tmp:
+        FILES += file
+        FILES += " "
+    
+    for file in get_platform_src():
         FILES += file
         FILES += " "
 
@@ -51,7 +67,7 @@ def build_project():
     os.system(COMMAND)
 
 def build_tools():
-    CFLAGS = "-I external/"
+    CFLAGS = "-static -I external/"
     TARGET = "tools/bin/" + MODE + "/"
     TOOLS = [
         ["editor.exe", "tools/editor/src/*.c"]
