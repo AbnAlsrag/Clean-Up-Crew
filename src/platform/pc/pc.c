@@ -675,7 +675,7 @@ platform_keycode_t get_key_code(KeyboardKey key) {
 
 MouseButton get_raylib_mouse_button(platform_mouse_button_t mouse_button) {
     switch(mouse_button) {
-    case PLATFORM_MOUSE_BUTTON_LEFT : return MOUSE_BUTTON_LEFT ;
+    case PLATFORM_MOUSE_BUTTON_LEFT : return MOUSE_BUTTON_LEFT;
     case PLATFORM_MOUSE_BUTTON_RIGHT: return MOUSE_BUTTON_RIGHT;
     case PLATFORM_MOUSE_BUTTON_MIDDLE: return MOUSE_BUTTON_MIDDLE;
     case PLATFORM_MOUSE_BUTTON_SIDE: return MOUSE_BUTTON_SIDE;
@@ -683,6 +683,8 @@ MouseButton get_raylib_mouse_button(platform_mouse_button_t mouse_button) {
     case PLATFORM_MOUSE_BUTTON_FORWARD: return MOUSE_BUTTON_FORWARD;
     case PLATFORM_MOUSE_BUTTON_BACK: return MOUSE_BUTTON_BACK;
     }
+
+    return 0;
 }
 
 vec2f_t raylib_Vector2_to_vec2f(Vector2 vec) {

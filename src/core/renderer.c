@@ -1,5 +1,7 @@
 #include "renderer.h"
 #include "platform/platform.h"
+#include "utils.h"
+#include <math.h>
 
 renderer_t renderer = {0};
 
@@ -12,7 +14,7 @@ void init_render_contex(void) {
         .width = 0, .height = 0,
         .title = "CUC",
         .target_fps = 60,
-        .config_flags = PLATFORM_CONFIG_FLAG_FULLSCREEN | PLATFORM_CONFIG_FLAG_VSYNC,
+        .config_flags = PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED | PLATFORM_CONFIG_FLAG_VSYNC,
     };
 
     platform_init(config);
@@ -27,6 +29,9 @@ void init_render_contex(void) {
     // SetTargetFPS(60);
     // renderer.screen_width = GetScreenWidth();
     // renderer.screen_height = GetScreenHeight();
+
+    renderer.screen_width = platform_get_window_size().x;
+    renderer.screen_height = platform_get_window_size().y;
 
     // #define CODEPOINTS_SIZE 1024
     // static int codepoints[CODEPOINTS_SIZE];
@@ -157,11 +162,9 @@ bool renderer_register_splitscreen(vec2f_t *player_position, uint8_t *out_id) {
         return false;
     }
 
-    splitscreen_t splitscreen = {
-        .player_position = player_position,
-        .camera = {0},
-        .viewport = {0},
-    };
+    splitscreen_t splitscreen = {0};
+    splitscreen.player_position = player_position;
+    splitscreen.camera.zoom = 1.0f;
 
     renderer.splitscreens[renderer.splitscreen_count] = splitscreen;
 
@@ -186,17 +189,43 @@ bool renderer_unregister_splitscreen(uint8_t id) {
         renderer.splitscreens[i] = renderer.splitscreens[i+1];
     }
 
-    compute_viewport_rects();
+    compute_splitscreen_rects();
 
     return true;
 }
 
 void renderer_update(void) {
-    if (platform_was_window_resized()) {
-        renderer.screen_width = platform_get_window_size().x;
-        renderer.screen_height = platform_get_window_size().y;
-        compute_splitscreen_rects();
+    // if (platform_was_window_resized()) {
+    //     renderer.screen_width = platform_get_window_size().x;
+    //     renderer.screen_height = platform_get_window_size().y;
+    //     compute_splitscreen_rects();
+    // }
+
+    platform_begin_drawing();
+    platform_clear_background(COLOR_BLACK);
+    for (size_t i = 0; i < renderer.splitscreen_count; i++) {
+        splitscreen_t *splitscreen = &renderer.splitscreens[i];
+        uint32_t width = splitscreen->viewport.width;
+        uint32_t height = splitscreen->viewport.height;
+        vec2f_t pos = (vec2f_t) { splitscreen->player_position->x, splitscreen->player_position->y };
+        float lerp_factor = 1.0f - exp(-5.0 * platform_get_delta_time());
+        splitscreen->camera.target = lerpfv2(splitscreen->camera.target, pos, lerp_factor);
+        splitscreen->camera.offset = (vec2f_t) { width/2.0f, height/2.0f };
+
+        platform_begin_viewport(splitscreen->viewport);
+        platform_begin_camera(splitscreen->camera);
+            if (i == 0) {
+                platform_draw_rect((rectf_t) { 0, 0, width, height }, VECTOR2_ZERO, 0.0f, COLOR_RED);
+            } else {
+                platform_draw_rect((rectf_t) { 0, 0, width, height }, VECTOR2_ZERO, 0.0f, COLOR_WHITE);
+            }
+
+            platform_draw_rect((rectf_t) { splitscreen->player_position->x, splitscreen->player_position->y, 100, 100 }, VECTOR2_ZERO, 0.0f, COLOR_PURPLE);
+        
+        platform_end_camera();
+        platform_end_viewport();
     }
+    platform_end_drawing();
 
 //     for (size_t i = 0; i < renderer.viewport_count; i++) {
 //         viewport_t *viewport = &renderer.viewports[i];
