@@ -1,31 +1,30 @@
 #ifndef _RENDERER_H_
 #define _RENDERER_H_
 
-#include "math_utils.h"
+#include "utils.h"
+#include "platform/platform.h"
 
 #include <stdint.h>
 
-#define MAX_VIEWPORTS 4
+#define MAX_SPLITSCREENS 4
 
-// typedef struct viewport_t {
-//     player_t *player;
-//     Camera2D camera;
-//     rectf_t rect;
-//     RenderTexture2D fb;
-// } viewport_t;
+typedef struct splitscreen_t {
+    vec2f_t *player_position;
+    platform_camera_t camera;
+    platform_viewport_t viewport;
+} splitscreen_t;
 
-// typedef struct renderer_t {
-//     viewport_t viewports[MAX_VIEWPORTS];
-//     size_t viewport_count;
-//     int screen_width;
-//     int screen_height;
-// } renderer_t;
+typedef struct renderer_t {
+    splitscreen_t splitscreens[MAX_SPLITSCREENS];
+    size_t splitscreen_count;
+    int screen_width;
+    int screen_height;
+} renderer_t;
 
 void init_render_contex(void);
-// viewport_t create_viewport(player_t *player);
-// void compute_viewport_rects(void);
-// bool renderer_register_viewport(viewport_t viewport, uint8_t *out_id);
-// bool renderer_unregister_viewport(uint8_t id);
+void compute_splitscreen_rects(void);
+bool renderer_register_splitscreen(vec2f_t *player_position, uint8_t *out_id);
+bool renderer_unregister_splitscreen(uint8_t id);
 void renderer_update(void);
 void deinit_render_contex(void);
 

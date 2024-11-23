@@ -1,22 +1,25 @@
 #include "renderer.h"
 #include "platform/platform.h"
 
-// renderer_t renderer = {0};
-// Font font = {0};
+renderer_t renderer = {0};
 
-texture_t player;
+platform_texture_t player;
+platform_sound_t sound;
+platform_frame_buffer_t fbo;
 
 void init_render_contex(void) {
     platform_config_t config = {
         .width = 0, .height = 0,
         .title = "CUC",
         .target_fps = 60,
-        .config_flags = CONFIG_FLAG_BORDERLESS_WINDOWED | CONFIG_FLAG_VSYNC,
+        .config_flags = PLATFORM_CONFIG_FLAG_FULLSCREEN | PLATFORM_CONFIG_FLAG_VSYNC,
     };
 
     platform_init(config);
 
-    player = load_texture("resources/imgs/test.png");
+    player = platform_load_texture("resources/imgs/test.png");
+    sound = platform_load_sound("resources/sounds/test.wav");
+    fbo = platform_load_frame_buffer(200, 200);
 
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_VSYNC_HINT);
     // SetConfigFlags(FLAG_WINDOW_UNDECORATED);
@@ -54,62 +57,88 @@ void init_render_contex(void) {
     // font = LoadFontEx("resources/fonts/DejaVuSans.ttf", 64, codepoints, i);
 }
 
-// viewport_t create_viewport(player_t *player) {
-//     viewport_t viewport;
+void compute_splitscreen_rects(void) {
+    int width = renderer.screen_width;
+    int height = renderer.screen_height;
 
-//     viewport.player = player;
-//     viewport.camera = (Camera2D) { 
-//         .offset = (vec2f_t) { .x = 0.0f, .y = 0.0f },
-//         .target = player->position,
-//         .rotation = 0, .zoom = 1.0f };
-//     viewport.rect = (rectf_t) { 0.0f, 0.0f, 0.0f, 0.0f };
-//     // viewport.fb = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    switch (renderer.splitscreen_count) {
+    case 1: {
+        width = renderer.screen_width;
+        height = renderer.screen_height;
 
-//     return viewport;
-// }
+        renderer.splitscreens[0].viewport.x = 0;
+        renderer.splitscreens[0].viewport.y = 0;
+        renderer.splitscreens[0].viewport.width = width;
+        renderer.splitscreens[0].viewport.height = height;
+    } break;
+    case 2: {
+        width = width/2;
+        height = renderer.screen_height;
 
+        renderer.splitscreens[0].viewport.x = 0;
+        renderer.splitscreens[0].viewport.y = 0;
+        renderer.splitscreens[0].viewport.width = width;
+        renderer.splitscreens[0].viewport.height = height;
+
+        renderer.splitscreens[1].viewport.x = width;
+        renderer.splitscreens[1].viewport.y = 0;
+        renderer.splitscreens[1].viewport.width = width;
+        renderer.splitscreens[1].viewport.height = height;
+    } break;
+    case 3: {
+        // width = width/2;
+        // height = height/2;
+        // renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
+        // renderer.viewports[1].rect = (rectf_t) { width, 0, width, height };
+        // // renderer.viewports[2].rect = (rectf_t) { 0, height, width*2, height };
+        // renderer.viewports[2].rect = (rectf_t) { 0, height, width, height };
+
+        width = width/3;
+        height = height;
+
+        renderer.splitscreens[0].viewport.x = 0;
+        renderer.splitscreens[0].viewport.y = 0;
+        renderer.splitscreens[0].viewport.width = width;
+        renderer.splitscreens[0].viewport.height = height;
+
+        renderer.splitscreens[1].viewport.x = width;
+        renderer.splitscreens[1].viewport.y = 0;
+        renderer.splitscreens[1].viewport.width = width;
+        renderer.splitscreens[1].viewport.height = height;
+
+        renderer.splitscreens[2].viewport.x = width*2;
+        renderer.splitscreens[2].viewport.y = 0;
+        renderer.splitscreens[2].viewport.width = width;
+        renderer.splitscreens[2].viewport.height = height;
+    } break;
+    case 4: {
+        width = width/2;
+        height = height/2;
+
+        renderer.splitscreens[0].viewport.x = 0;
+        renderer.splitscreens[0].viewport.y = 0;
+        renderer.splitscreens[0].viewport.width = width;
+        renderer.splitscreens[0].viewport.height = height;
+
+        renderer.splitscreens[1].viewport.x = width;
+        renderer.splitscreens[1].viewport.y = 0;
+        renderer.splitscreens[1].viewport.width = width;
+        renderer.splitscreens[1].viewport.height = height;
+
+        renderer.splitscreens[2].viewport.x = 0;
+        renderer.splitscreens[2].viewport.y = height;
+        renderer.splitscreens[2].viewport.width = width;
+        renderer.splitscreens[2].viewport.height = height;
+
+        renderer.splitscreens[3].viewport.x = width;
+        renderer.splitscreens[3].viewport.y = height;
+        renderer.splitscreens[3].viewport.width = width;
+        renderer.splitscreens[3].viewport.height = height;
+    } break;
+    }
+
+}
 // void compute_viewport_rects(void) {
-//     int width = renderer.screen_width;
-//     int height = renderer.screen_height;
-    
-//     switch (renderer.viewport_count) {
-//     case 0: {
-//         TraceLog(LOG_ERROR, "There is no active viewports atleast one is needed");
-//     } break;
-//     case 1: {
-//         width = renderer.screen_width;
-//         height = renderer.screen_height;
-//         renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
-//     } break;
-//     case 2: {
-//         width = width/2;
-//         height = renderer.screen_height;
-//         renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
-//         renderer.viewports[1].rect = (rectf_t) { width, 0, width, height };
-//     } break;
-//     case 3: {
-//         // width = width/2;
-//         // height = height/2;
-//         // renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
-//         // renderer.viewports[1].rect = (rectf_t) { width, 0, width, height };
-//         // // renderer.viewports[2].rect = (rectf_t) { 0, height, width*2, height };
-//         // renderer.viewports[2].rect = (rectf_t) { 0, height, width, height };
-
-//         width = width/3;
-//         height = height;
-//         renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
-//         renderer.viewports[1].rect = (rectf_t) { width, 0, width, height };
-//         renderer.viewports[2].rect = (rectf_t) { width*2, 0, width, height };
-//     } break;
-//     case 4: {
-//         width = width/2;
-//         height = height/2;
-//         renderer.viewports[0].rect = (rectf_t) { 0, 0, width, height };
-//         renderer.viewports[1].rect = (rectf_t) { width, 0, width, height };
-//         renderer.viewports[2].rect = (rectf_t) { 0, height, width, height };
-//         renderer.viewports[3].rect = (rectf_t) { width, height, width, height };
-//     } break;
-//     }
 
 //     for (size_t i = 0; i < renderer.viewport_count; i++) {
 //         int fb_width = renderer.viewports[i].rect.width;
@@ -123,59 +152,51 @@ void init_render_contex(void) {
 //     }
 // }
 
-// bool renderer_register_viewport(viewport_t viewport, uint8_t *out_id) {
-//     if (renderer.viewport_count >= MAX_VIEWPORTS) {
-//         TraceLog(LOG_WARNING, "Max viewports reached can't register the given viewport");
-//         return false;
-//     }
+bool renderer_register_splitscreen(vec2f_t *player_position, uint8_t *out_id) {
+    if (player_position == NULL) {
+        return false;
+    }
 
-//     renderer.viewports[renderer.viewport_count] = viewport;
+    splitscreen_t splitscreen = {
+        .player_position = player_position,
+        .camera = {0},
+        .viewport = {0},
+    };
 
-//     if (out_id != NULL) {
-//         *out_id = renderer.viewport_count;
-//     }
-    
-//     renderer.viewport_count += 1;
+    renderer.splitscreens[renderer.splitscreen_count] = splitscreen;
 
-//     compute_viewport_rects();
+    if (out_id != NULL) {
+        *out_id = renderer.splitscreen_count;
+    }
 
-//     return true;
-// }
+    renderer.splitscreen_count += 1;
 
-// bool renderer_unregister_viewport(uint8_t id) {
-//     if (id >= renderer.viewport_count) {
-//         TraceLog(LOG_WARNING, "Invalid viewport id can't unregister an invalid id");
-//         TraceLog(LOG_DEBUG, TextFormat("viewport_count = %d, id = %d", renderer.viewport_count, id));
-//         return false;
-//     }
+    compute_splitscreen_rects();
 
-//     renderer.viewport_count -= 1;
-//     for (size_t i = id; i < renderer.viewport_count; i++) {
-//         renderer.viewports[i] = renderer.viewports[i+1];
-//     }
+    return true;
+}
 
-//     compute_viewport_rects();
+bool renderer_unregister_splitscreen(uint8_t id) {
+    if (id >= renderer.splitscreen_count) {
+        return false;
+    }
 
-//     return true;
-// }
+    renderer.splitscreen_count -= 1;
+    for (size_t i = id; i < renderer.splitscreen_count; i++) {
+        renderer.splitscreens[i] = renderer.splitscreens[i+1];
+    }
 
-#include <raylib/raylib.h>
+    compute_viewport_rects();
+
+    return true;
+}
 
 void renderer_update(void) {
-    begin_drawing();
-        clear_background(COLOR_RAYWHITE);
-        draw_texture(player, (rectf_t) { 0, 0, player.width, player.height }, (rectf_t) { 0, 0, player.width, player.height }, VECTOR2_ZERO, 0.0f, get_color(0xFF0000FF));
-    end_drawing();
-//     {
-//         int screen_width = GetScreenWidth();
-//         int screen_height = GetScreenHeight();
-
-//         if (renderer.screen_width != screen_width || renderer.screen_height != screen_height) {
-//             renderer.screen_width = screen_width;
-//             renderer.screen_height = screen_height;
-//             compute_viewport_rects();
-//         }
-//     }
+    if (platform_was_window_resized()) {
+        renderer.screen_width = platform_get_window_size().x;
+        renderer.screen_height = platform_get_window_size().y;
+        compute_splitscreen_rects();
+    }
 
 //     for (size_t i = 0; i < renderer.viewport_count; i++) {
 //         viewport_t *viewport = &renderer.viewports[i];
@@ -228,6 +249,7 @@ void renderer_update(void) {
 }
 
 void deinit_render_contex(void) {
-    unload_texture(player);
+    platform_unload_texture(player);
+    platform_unload_sound(sound);
     platform_deinit();
 }
