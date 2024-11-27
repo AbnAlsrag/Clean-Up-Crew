@@ -9,6 +9,9 @@ typedef struct internal_data_t {
     platform_config_t config;
     bool is_viewport_active;
     platform_viewport_t active_viewport;
+    bool is_camera_active;
+    platform_camera_t active_camera;
+    bool is_wireframe_mode_active;
 } internal_data_t;
 
 static internal_data_t internal_data = {0};
@@ -182,8 +185,29 @@ void platform_set_sound_pan(platform_sound_t sound, float pan) {
 }
 
 void platform_clear_background(color_t color) {
+    bool disabled_camera = false;
+    bool disabled_wireframe = false;
+
     if (internal_data.is_viewport_active) {
+        if (internal_data.is_camera_active) {
+            platform_end_camera();
+            disabled_camera = true;
+        }
+
+        if (internal_data.is_wireframe_mode_active) {
+            platform_end_wireframe_mode();
+            disabled_wireframe = true;
+        }
+
         DrawRectangle(0, 0, internal_data.active_viewport.width, internal_data.active_viewport.height, color_to_raylib_Color(color));
+
+        if (disabled_camera) {
+            platform_begin_camera(internal_data.active_camera);
+        }
+
+        if (disabled_wireframe) {
+            platform_begin_wireframe_mode();
+        }
     } else {
         ClearBackground(color_to_raylib_Color(color));
     }
@@ -283,10 +307,15 @@ void platform_end_frame_buffer(void) {
 
 void platform_begin_camera(platform_camera_t camera) {
     BeginMode2D(camera_to_raylib_Camera2D(camera));
+
+    internal_data.is_camera_active = true;
+    internal_data.active_camera = camera;
 }
 
 void platform_end_camera(void) {
     EndMode2D();
+
+    internal_data.is_camera_active = false;
 }
 
 void platform_begin_blend_mode(platform_blend_mode_t mode) {
@@ -303,6 +332,22 @@ void platform_begin_scissor_mode(rectf_t rect) {
 
 void platform_end_scissor_mode(void) {
     EndScissorMode();
+}
+
+void platform_begin_wireframe_mode(void) {
+    rlDrawRenderBatchActive();
+
+    rlEnableWireMode();
+
+    internal_data.is_wireframe_mode_active = true;
+}
+
+void platform_end_wireframe_mode(void) {
+    rlDrawRenderBatchActive();
+    
+    rlDisableWireMode();
+
+    internal_data.is_wireframe_mode_active = false;
 }
 
 vec2f_t platform_get_world_to_screen(platform_camera_t camera, vec2f_t pos) {

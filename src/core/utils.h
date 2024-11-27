@@ -1,5 +1,5 @@
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#ifndef _CUC_UTILS_H_
+#define _CUC_UTILS_H_
 
 #include <stdint.h>
 
@@ -62,4 +62,4 @@ uint32_t color_to_u32(color_t color);
 color_t color_lerpf(color_t a, color_t b, float t);
 
 
-#endif // _UTILS_H_
+#endif // _CUC_UTILS_H_

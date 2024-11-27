@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "core/renderer.h"
+#include "core/engine.h"
 #include "platform/platform.h"
 
 int main(void) {

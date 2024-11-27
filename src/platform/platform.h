@@ -242,6 +242,8 @@ void platform_begin_blend_mode(platform_blend_mode_t mode);
 void platform_end_blend_mode(void);
 void platform_begin_scissor_mode(rectf_t rect);
 void platform_end_scissor_mode(void);
+void platform_begin_wireframe_mode(void);
+void platform_end_wireframe_mode(void);
 vec2f_t platform_get_world_to_screen(platform_camera_t camera, vec2f_t pos);
 vec2f_t platform_get_screen_to_world(platform_camera_t camera, vec2f_t pos);
 
