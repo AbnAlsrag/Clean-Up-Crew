@@ -6,6 +6,38 @@ float lerpf(float a, float b, float t) {
     return (1 - t) * a + t * b;
 }
 
+vec2f_t vec2f_add(vec2f_t a, vec2f_t b) {
+    return (vec2f_t) { a.x + b.x, a.y + b.y };
+}
+
+vec2f_t vec2f_add_value(vec2f_t a, float b) {
+    return (vec2f_t) { a.x + b, a.y + b };
+}
+
+vec2f_t vec2f_sub(vec2f_t a, vec2f_t b) {
+    return (vec2f_t) { a.x - b.x, a.y - b.y };
+}
+
+vec2f_t vec2f_sub_value(vec2f_t a, float b) {
+    return (vec2f_t) { a.x - b, a.y - b };
+}
+
+vec2f_t vec2f_mult(vec2f_t a, vec2f_t b) {
+    return (vec2f_t) { a.x * b.x, a.y * b.y };
+}
+
+vec2f_t vec2f_mult_value(vec2f_t a, float b) {
+    return (vec2f_t) { a.x * b, a.y * b };
+}
+
+vec2f_t vec2f_div(vec2f_t a, vec2f_t b) {
+    return (vec2f_t) { a.x / b.x, a.y / b.y };
+}
+
+vec2f_t vec2f_div_value(vec2f_t a, float b) {
+    return (vec2f_t) { a.x / b, a.y / b };
+}
+
 vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t) {
     return (vec2f_t) { .x = lerpf(a.x, b.x, t), .y = lerpf(a.y, b.y, t) };
 }

@@ -54,9 +54,19 @@ typedef struct color_t {
 } color_t;
 
 float lerpf(float a, float b, float t);
+
+vec2f_t vec2f_add(vec2f_t a, vec2f_t b);
+vec2f_t vec2f_add_value(vec2f_t a, float b);
+vec2f_t vec2f_sub(vec2f_t a, vec2f_t b);
+vec2f_t vec2f_sub_value(vec2f_t a, float b);
+vec2f_t vec2f_mult(vec2f_t a, vec2f_t b);
+vec2f_t vec2f_mult_value(vec2f_t a, float b);
+vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
+vec2f_t vec2f_div_value(vec2f_t a, float b);
 vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t slerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t cartesian2polarfv2(vec2f_t vec);
+
 color_t color_from_u32(uint32_t value);
 uint32_t color_to_u32(color_t color);
 color_t color_lerpf(color_t a, color_t b, float t);

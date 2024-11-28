@@ -389,8 +389,6 @@ platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t heig
         rlDisableFramebuffer();
     }
 
-    TraceLog(LOG_INFO, "Frame buffer created: ID = %d, Width = %d, Height = %d", result.id, result.texture.width, result.texture.height);
-
     return result;
 }
 
