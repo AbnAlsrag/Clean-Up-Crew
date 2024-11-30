@@ -195,6 +195,20 @@ bool cuc_engine_is_entity_player(entity_id_t id, player_t **out_player) {
     return false;
 }
 
+bool cuc_engine_is_entity_splitscreen_player(entity_id_t id, splitscreen_t **out_splitscreen) {
+        for (size_t i = 0; i < engine.splitscreen_count && i < MAX_SPLITSCREENS; i++) {
+        if (engine.splitscreens[i].player.id == id) {
+            if (out_splitscreen != NULL) {
+                *out_splitscreen = &engine.splitscreens[i];
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 room_index_t cuc_engine_register_room(room_t room) {
     room_index_t index = 0;
     bool found_sth = false;

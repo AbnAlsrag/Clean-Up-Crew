@@ -145,6 +145,7 @@ entity_t *cuc_engine_get_entity(entity_id_t entity_id);
 bool cuc_engine_set_entity_handler(entity_handler_id_t handler_id, entity_handler_t handler);
 entity_handler_t cuc_engine_get_entity_handler(entity_handler_id_t handler_id);
 bool cuc_engine_is_entity_player(entity_id_t id, player_t **out_player);
+bool cuc_engine_is_entity_splitscreen_player(entity_id_t id, splitscreen_t **out_splitscreen);
 
 room_index_t cuc_engine_register_room(room_t room_index);
 bool cuc_engine_unregister_room(room_index_t room_index);

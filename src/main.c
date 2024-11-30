@@ -4,11 +4,13 @@
 
 void player_handler(entity_id_t id) {
     entity_t *entity = cuc_engine_get_entity(id);
-    player_t *player;
+    splitscreen_t *splitscreen;
 
-    if (!cuc_engine_is_entity_player(id, &player)) {
+    if (!cuc_engine_is_entity_splitscreen_player(id, &splitscreen)) {
         return;
     }
+
+    player_t *player = &splitscreen->player;
 
     float dt = cuc_engine_get_tick_delta();
     float speed = 400.0f;
@@ -38,6 +40,8 @@ void player_handler(entity_id_t id) {
 
     player->camera.offset = vec2f_div_value(platform_get_window_size(), 2.0f);
 
+    cuc_engine_draw_rect(entity->pos.room_index, (rectf_t) { 0, 0, splitscreen->viewport.width, splitscreen->viewport.height }, COLOR_WHITE);
+
     cuc_engine_draw_rect(entity->pos.room_index, (rectf_t) { entity->pos.x, entity->pos.y, 100, 100 }, COLOR_RED);
 
     if (platform_is_key_pressed(PLATFORM_KEYCODE_F)) {
@@ -52,7 +56,7 @@ int main(void) {
 
     cuc_engine_set_entity_handler(1, player_handler);
 
-    entity_pos_t players_pos = { .room_index = 0, .x = 100, .y = 100 };
+    entity_pos_t players_pos = { .room_index = 0, .x = 0, .y = 0 };
 
     entity_id_t player_id_0 = cuc_engine_register_entity((entity_t) { .pos = players_pos, .handler_id = 1 });
 
