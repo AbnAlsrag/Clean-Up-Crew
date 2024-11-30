@@ -34,8 +34,37 @@ vec2f_t vec2f_div(vec2f_t a, vec2f_t b) {
     return (vec2f_t) { a.x / b.x, a.y / b.y };
 }
 
+bool vec2f_equal(vec2f_t a, vec2f_t b) {
+    bool result = ((fabsf(a.x - b.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(a.x), fabsf(b.x))))) &&
+                ((fabsf(a.y - b.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(a.y), fabsf(b.y)))));
+
+    return result;
+}
+
+float vec2f_length(vec2f_t vec) {
+    return sqrtf((vec.x*vec.x) + (vec.y*vec.y));
+}
+
+float vec2f_distance(vec2f_t a, vec2f_t b) {
+    return sqrtf((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+}
+
 vec2f_t vec2f_div_value(vec2f_t a, float b) {
     return (vec2f_t) { a.x / b, a.y / b };
+}
+
+vec2f_t vec2f_normalize(vec2f_t vec) {
+    vec2f_t result = VECTOR2_ZERO;
+
+    float length = sqrtf((vec.x*vec.x) + (vec.y*vec.y));
+
+    if (length > 0) {
+        float ilength = 1.0f/length;
+        result.x = vec.x*ilength;
+        result.y = vec.y*ilength;
+    }
+
+    return result;
 }
 
 vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t) {

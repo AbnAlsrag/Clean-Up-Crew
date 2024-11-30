@@ -253,6 +253,7 @@ void platform_unload_texture(platform_texture_t texture);
 platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t height);
 void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer);
 
+void platform_draw_fps(vec2f_t pos);
 void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t color);
 void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t color);
 void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t color);

@@ -4,6 +4,8 @@
         "type_traits": "c",
         "format": "c",
         "cstdint": "c",
-        "*.m": "c"
+        "*.m": "c",
+        "string_view": "c",
+        "variant": "c"
     }
 }

@@ -2,6 +2,9 @@
 #define _CUC_UTILS_H_
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#define EPSILON 0.000001f
 
 #define VECTOR2_FMT "(vec2f_t) { %f, %f }"
 #define VECTOR2_ARG(__MACRO_INPUT_VEC__) (__MACRO_INPUT_VEC__).x, (__MACRO_INPUT_VEC__).y
@@ -63,6 +66,10 @@ vec2f_t vec2f_mult(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_mult_value(vec2f_t a, float b);
 vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_div_value(vec2f_t a, float b);
+bool vec2f_equal(vec2f_t a, vec2f_t b);
+float vec2f_length(vec2f_t vec);
+float vec2f_distance(vec2f_t a, vec2f_t b);
+vec2f_t vec2f_normalize(vec2f_t vec);
 vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t slerpfv2(vec2f_t a, vec2f_t b, float t);
 vec2f_t cartesian2polarfv2(vec2f_t vec);

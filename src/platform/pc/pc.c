@@ -402,6 +402,10 @@ void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer) {
     }
 }
 
+void platform_draw_fps(vec2f_t pos) {
+    DrawFPS(pos.x, pos.y);
+}
+
 void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t color) {
     DrawLineEx(vec2f_to_raylib_Vector2(start), vec2f_to_raylib_Vector2(end), thickness, color_to_raylib_Color(color));
 }
@@ -428,6 +432,7 @@ void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t d
     DrawTexturePro(raylib_texture, rectf_to_raylib_Rectangle(source), rectf_to_raylib_Rectangle(dest), vec2f_to_raylib_Vector2(origin), rotation, color_to_raylib_Color(tint));
 }
 
+// NOTE: see performance diff between rlBlitFramebuffer and DrawTexturePro
 void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint) {
     Texture2D raylib_texture = texture_to_raylib_Texture2D(frame_buffer.texture);
 
