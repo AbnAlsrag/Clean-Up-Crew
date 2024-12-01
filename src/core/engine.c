@@ -8,12 +8,16 @@ static cuc_engine_t engine = {0};
 
 void compute_splitscreen_rects(void);
 void cuc_tick_update(void);
-bool is_entity_slot_empty(entity_id_t entity_id);
-bool set_entity_slot(entity_id_t entity_id, bool value);
+bool is_entity_slot_empty(entity_index_t entity_index);
+bool set_entity_slot(entity_index_t entity_index, bool value);
 bool is_room_slot_empty(room_index_t index);
 bool set_room_slot(room_index_t index, bool value);
 bool room_push_draw_call(room_index_t index, draw_call_t draw_call);
 void draw_room(room_index_t index);
+clue_stack_t *get_room_front_clue_stack(room_index_t room_index);
+clue_stack_t *get_room_back_clue_stack(room_index_t room_index);
+bool room_switch_clue_stacks(room_index_t room_index);
+// NOTE: This might be a little ineffcient but whatever :)
 
 void cuc_engine_init(void) {
     platform_config_t config = {
@@ -93,6 +97,9 @@ void cuc_engine_update(void) {
         compute_splitscreen_rects();
     }
 
+    // NOTE: this is just temporary because i don't know how to clear the draw call stacks effeciently for not :>
+    bool drawn_rooms[MAX_ROOMS] = {0};
+
     cuc_tick_update();
 
     platform_begin_drawing();
@@ -107,11 +114,23 @@ void cuc_engine_update(void) {
             platform_clear_background(COLOR_BLACK);
             // platform_clear_background(COLOR_RED);
             draw_room(player_entity->pos.room_index);
+            
+            drawn_rooms[player_entity->pos.room_index] = true;
         platform_end_camera();
         platform_end_viewport();
     }
         platform_draw_fps((vec2f_t) { 10, 10 });
     platform_end_drawing();
+
+    for (size_t i = 0; i < MAX_ROOMS; i++) {
+        if (!drawn_rooms[i]) {
+            continue;
+        }
+
+        for (size_t j = 0; j < MAX_DRAW_LAYERS; j++) {
+            engine.rooms[i].draw_layers[j] = (draw_layer_t) {0};
+        }
+    }
 }
 
 void cuc_engine_quit(void) {
@@ -122,15 +141,19 @@ float cuc_engine_get_tick_delta(void) {
     return platform_get_delta_time();
 }
 
-entity_id_t cuc_engine_register_entity(entity_t entity) {
-    entity_id_t id = 0;
+double cuc_engine_get_time(void) {
+    return platform_get_time();
+}
+
+entity_index_t cuc_engine_register_entity(entity_t entity) {
+    entity_index_t index = 0;
     bool found_sth = false;
 
-    for (; id < MAX_ENTITIES && id != ILLEGAL_ENTITY_ID; id++) {
-        if (is_entity_slot_empty(id)) {
-            set_entity_slot(id, true);
-            engine.entities[id] = entity;
-            engine.entities[id].id = id;
+    for (; index < MAX_ENTITIES && index != ILLEGAL_ENTITY_ID; index++) {
+        if (is_entity_slot_empty(index)) {
+            set_entity_slot(index, true);
+            engine.entities[index] = entity;
+            engine.entities[index].index = index;
             found_sth = true;
             break;
         }
@@ -140,19 +163,19 @@ entity_id_t cuc_engine_register_entity(entity_t entity) {
         return ILLEGAL_ENTITY_ID;
     }
 
-    return id;
+    return index;
 }
 
-bool cuc_engine_unregister_entity(entity_id_t entity_id) {
-    return set_entity_slot(entity_id, false);
+bool cuc_engine_unregister_entity(entity_index_t entity_index) {
+    return set_entity_slot(entity_index, false);
 }
 
-entity_t *cuc_engine_get_entity(entity_id_t entity_id) {
-    if (entity_id >= MAX_ENTITIES || entity_id == ILLEGAL_ENTITY_ID || is_entity_slot_empty(entity_id)) {
+entity_t *cuc_engine_get_entity(entity_index_t entity_index) {
+    if (entity_index >= MAX_ENTITIES || entity_index == ILLEGAL_ENTITY_ID || is_entity_slot_empty(entity_index)) {
         return NULL;
     }
     
-    return &engine.entities[entity_id];
+    return &engine.entities[entity_index];
 }
 
 bool cuc_engine_set_entity_handler(entity_handler_id_t handler_id, entity_handler_t handler) {
@@ -160,7 +183,7 @@ bool cuc_engine_set_entity_handler(entity_handler_id_t handler_id, entity_handle
         return false;
     }
 
-    if (handler_id == 0) {
+    if (handler_id == EMPTY_ENTITY_HANDLER) {
         return false;
     }
 
@@ -174,14 +197,14 @@ entity_handler_t cuc_engine_get_entity_handler(entity_handler_id_t handler_id) {
         return NULL;
     }
 
-    if (handler_id == 0) {
+    if (handler_id == EMPTY_ENTITY_HANDLER) {
         return NULL;
     }
 
     return engine.entity_handlers[handler_id];
 }
 
-bool cuc_engine_is_entity_player(entity_id_t id, player_t **out_player) {
+bool cuc_engine_is_entity_player(entity_index_t id, player_t **out_player) {
     for (size_t i = 0; i < engine.splitscreen_count && i < MAX_SPLITSCREENS; i++) {
         if (engine.splitscreens[i].player.id == id) {
             if (out_player != NULL) {
@@ -195,7 +218,7 @@ bool cuc_engine_is_entity_player(entity_id_t id, player_t **out_player) {
     return false;
 }
 
-bool cuc_engine_is_entity_splitscreen_player(entity_id_t id, splitscreen_t **out_splitscreen) {
+bool cuc_engine_is_entity_splitscreen_player(entity_index_t id, splitscreen_t **out_splitscreen) {
         for (size_t i = 0; i < engine.splitscreen_count && i < MAX_SPLITSCREENS; i++) {
         if (engine.splitscreens[i].player.id == id) {
             if (out_splitscreen != NULL) {
@@ -209,6 +232,42 @@ bool cuc_engine_is_entity_splitscreen_player(entity_id_t id, splitscreen_t **out
     return false;
 }
 
+entity_id_t cuc_engine_entity_index_to_id(entity_index_t entity_index) {
+    if (entity_index >= MAX_ENTITIES) {
+        return ILLEGAL_ENTITY_ID;
+    }
+
+    if (entity_index == ILLEGAL_ENTITY_ID) {
+        return ILLEGAL_ENTITY_ID;
+    }
+
+    if (is_entity_slot_empty(entity_index)) {
+        return ILLEGAL_ENTITY_ID;
+    }
+
+    return engine.entities[entity_index].id;
+}
+
+entity_index_t cuc_engine_entity_id_to_index(entity_id_t entity_id) {
+    if (entity_id == ILLEGAL_ENTITY_ID) {
+        return ILLEGAL_ENTITY_ID;
+    }
+
+    entity_index_t index = 0;
+
+    for (; index < MAX_ENTITIES; index++) {
+        if (is_entity_slot_empty(index)) {
+            continue;
+        }
+
+        if (engine.entities[index].id == entity_id) {
+            return index;
+        }        
+    }
+
+    return ILLEGAL_ENTITY_ID;
+}
+
 room_index_t cuc_engine_register_room(room_t room) {
     room_index_t index = 0;
     bool found_sth = false;
@@ -218,6 +277,8 @@ room_index_t cuc_engine_register_room(room_t room) {
             set_room_slot(index, true);
             engine.rooms[index] = room;
             engine.rooms[index].index = index;
+            engine.rooms[index].clue_buffer.stack_0.room_index = index;
+            engine.rooms[index].clue_buffer.stack_1.room_index = index;
             found_sth = true;
             break;
         }
@@ -278,12 +339,56 @@ room_index_t cuc_engine_room_id_to_index(room_id_t room_id) {
     room_index_t index = 0;
     
     for (; index < MAX_ROOMS; index++) {
+        if (is_room_slot_empty(index)) {
+            continue;
+        }
+
         if (engine.rooms[index].id == room_id) {
             return index;
         }
     }
 
     return ILLEGAL_ROOM_ID;
+}
+
+bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue) {
+    clue_stack_t *back_clue_stack = get_room_back_clue_stack(room_index);
+
+    if (back_clue_stack == NULL) {
+        return false;
+    }
+
+    back_clue_stack->clues[back_clue_stack->clue_count] = clue;
+    back_clue_stack->clue_count += 1;
+
+    return true;
+}
+
+clue_query_t cuc_engine_query_clues(room_index_t room_index) {
+    clue_query_t query = {0};
+
+    room_t *room = cuc_engine_get_room(room_index);
+
+    query.clue_stack_count = room->connections_count+1;
+    query.clue_stacks[0] = get_room_front_clue_stack(room_index);
+
+    printf("%d\n", query.clue_stacks[0]->clue_count);
+
+    for (size_t i = 1; i < query.clue_stack_count; i++) {
+        query.clue_stacks[i] = get_room_front_clue_stack(room->connections[i-1].index);
+    }
+
+    return query;
+}
+
+bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer) {
+    if (layer >= MAX_DRAW_LAYERS) {
+        return false;
+    }
+
+    engine.current_layer = layer;
+
+    return true;
 }
 
 bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, color_t color) {
@@ -376,58 +481,66 @@ void compute_splitscreen_rects(void) {
 void cuc_tick_update(void) {
     for (size_t i = 0; i < MAX_ROOMS && i != ILLEGAL_ROOM_ID; i++) {
         if (is_room_slot_empty(i)) {
-            break;
+            continue;
         }
 
         room_t *room = cuc_engine_get_room(i);
 
         if (room == NULL) {
-            break;
+            continue;
         }
 
         for (size_t j = 0; j < room->entity_count && j < MAX_ENTITY_REFERENCES; j++) {
             entity_t *entity = cuc_engine_get_entity(room->entities[j]);
 
             if (entity == NULL) {
-                break;
+                continue;;
             }
 
             entity_handler_t handler = cuc_engine_get_entity_handler(entity->handler_id);
 
             if (handler != NULL) {
-                handler(entity->id);
+                handler(entity->index);
             }
         }
     }
+
+    for (room_index_t idx = 0; idx < MAX_ROOMS; idx++) {
+        if (is_room_slot_empty(idx)) {
+            continue;
+        }
+        
+        room_switch_clue_stacks(idx);
+    }
 }
 
-bool is_entity_slot_empty(entity_id_t entity_id) {
-    if (entity_id >= MAX_ENTITIES) {
+bool is_entity_slot_empty(entity_index_t entity_index) {
+    if (entity_index >= MAX_ENTITIES) {
         return false;
     }
 
-    if (entity_id == ILLEGAL_ENTITY_ID) {
+    if (entity_index == ILLEGAL_ENTITY_ID) {
         return false;
     }
 
-    size_t index = entity_id/8;
-    uint8_t mask = 1 << (entity_id%8);
+    size_t index = entity_index/8;
+    uint8_t mask = 1 << (entity_index%8);
     return (engine.entity_slots[index]&mask) == 0;
 }
 
-bool set_entity_slot(entity_id_t entity_id, bool value) {
-    if (entity_id >= MAX_ENTITIES) {
+bool set_entity_slot(entity_index_t entity_index, bool value) {
+    if (entity_index >= MAX_ENTITIES) {
         return false;
     }
 
-    if (entity_id == ILLEGAL_ENTITY_ID) {
+    if (entity_index == ILLEGAL_ENTITY_ID) {
         return false;
     }
 
-    size_t index = entity_id/8;
-    uint8_t mask = 1 << (entity_id%8);
+    size_t index = entity_index/8;
+    uint8_t mask = 1 << (entity_index%8);
     engine.entity_slots[index] &= ~mask;
-    engine.entity_slots[index] |= (value&1) << (entity_id%8);
+    engine.entity_slots[index] |= (value&1) << (entity_index%8);
 
     return true;
 }
@@ -466,12 +579,15 @@ bool set_room_slot(room_index_t room_index, bool value) {
 bool room_push_draw_call(room_index_t index, draw_call_t draw_call) {
     room_t *room = cuc_engine_get_room(index);
 
-    if (room->draw_call_count >= MAX_DRAW_CALLS) {
+    draw_layer_id_t layer = engine.current_layer;
+    draw_layer_t *draw_layer = &room->draw_layers[layer];
+
+    if (draw_layer->draw_call_count >= MAX_DRAW_CALLS) {
         return false;
     }
 
-    room->draw_calls[room->draw_call_count] = draw_call;
-    room->draw_call_count += 1;
+    draw_layer->draw_calls[draw_layer->draw_call_count] = draw_call;
+    draw_layer->draw_call_count += 1;
 
     return true;
 }
@@ -479,20 +595,95 @@ bool room_push_draw_call(room_index_t index, draw_call_t draw_call) {
 void draw_room(room_index_t index) {
     room_t *room = cuc_engine_get_room(index);
     
-    for (size_t i = 0; i < room->draw_call_count; i++) {
-        draw_call_t draw_call = room->draw_calls[i];
-        
-        switch (draw_call.kind) {
-        case DRAW_CALL_KIND_RECT: {
-            rect_draw_call_t rect_draw_call = draw_call.as.rect;
-            
-            platform_draw_rect(rect_draw_call.rect, (vec2f_t) { rect_draw_call.rect.width/2.0f, rect_draw_call.rect.height/2.0f }, 0.0f, rect_draw_call.color);
-        }break;
-        default: {
-            assert(0 && "Unknown draw call");
-        }break;
+    for (size_t i = 0; i < MAX_DRAW_LAYERS; i++) {
+        draw_layer_t draw_layer = room->draw_layers[i];
+        for (size_t j = 0; j < draw_layer.draw_call_count && j < MAX_DRAW_CALLS; j++) {
+            draw_call_t draw_call = draw_layer.draw_calls[j];
+
+            switch (draw_call.kind) {
+            case DRAW_CALL_KIND_RECT: {
+                rect_draw_call_t rect_draw_call = draw_call.as.rect;
+                
+                platform_draw_rect(rect_draw_call.rect, (vec2f_t) { rect_draw_call.rect.width/2.0f, rect_draw_call.rect.height/2.0f }, 0.0f, rect_draw_call.color);
+            }break;
+            default: {
+                assert(0 && "Unknown draw call");
+            }break;
+            }
         }
     }
+}
 
-    room->draw_call_count = 0;
+clue_stack_t *get_room_front_clue_stack(room_index_t room_index) {
+    if (room_index >= MAX_ROOMS) {
+        return NULL;
+    }
+
+    if (room_index == ILLEGAL_ENTITY_ID) {
+        return NULL;
+    }
+
+    room_t *room = cuc_engine_get_room(room_index);
+
+    if (room == NULL) {
+        return NULL;
+    }
+
+    if (room->clue_buffer.is_zero_stack_front) {
+        return &room->clue_buffer.stack_0;
+    } else {
+        return &room->clue_buffer.stack_1;
+    }
+    
+    return NULL;
+}
+
+clue_stack_t *get_room_back_clue_stack(room_index_t room_index) {
+    if (room_index >= MAX_ROOMS) {
+        return NULL;
+    }
+
+    if (room_index == ILLEGAL_ENTITY_ID) {
+        return NULL;
+    }
+
+    room_t *room = cuc_engine_get_room(room_index);
+
+    if (room == NULL) {
+        return NULL;
+    }
+
+    if (!room->clue_buffer.is_zero_stack_front) {
+        return &room->clue_buffer.stack_0;
+    } else {
+        return &room->clue_buffer.stack_1;
+    }
+    
+    return NULL;
+}
+
+bool room_switch_clue_stacks(room_index_t room_index) {
+    if (room_index >= MAX_ROOMS) {
+        return false;
+    }
+
+    if (room_index == ILLEGAL_ENTITY_ID) {
+        return false;
+    }
+
+    room_t *room = cuc_engine_get_room(room_index);
+
+    if (room == NULL) {
+        return false;
+    }
+
+    if (room->clue_buffer.is_zero_stack_front) {
+        room->clue_buffer.stack_0.clue_count = 0;
+        room->clue_buffer.is_zero_stack_front = false;
+    } else {
+        room->clue_buffer.stack_1.clue_count = 0;
+        room->clue_buffer.is_zero_stack_front = true;
+    }
+
+    return true;
 }

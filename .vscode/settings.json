@@ -6,6 +6,7 @@
         "cstdint": "c",
         "*.m": "c",
         "string_view": "c",
-        "variant": "c"
+        "variant": "c",
+        "text_encoding": "c"
     }
 }

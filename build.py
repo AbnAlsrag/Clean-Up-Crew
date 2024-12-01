@@ -34,7 +34,7 @@ def get_platform_src():
     return files
 
 def build_project():
-    CFLAGS = "-std=c17 -Wall -Werror -pedantic -static -I src -I external/"
+    CFLAGS = "-std=c99 -Wall -Werror -pedantic -static -I src -I external/"
     TARGET = "bin/" + MODE + "/" + OUTPUT + ".exe"
     FILES = ""
 
