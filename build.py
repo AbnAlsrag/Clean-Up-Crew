@@ -2,13 +2,15 @@ import os
 import glob
 import argparse
 import pathlib
+import subprocess
 
 PROJECT_NAME = "Clean Up Crew"
 
 parser = argparse.ArgumentParser(prog=PROJECT_NAME)
-parser.add_argument("-m", "--mode", dest="mode", default="debug", help="Specifies the mode of compilation e.g.(debug, dev, release)")
+parser.add_argument("-m", "--mode", dest="mode", default="debug", choices=["debug", "dev", "release"], help="Specifies the mode of compilation e.g.(debug, dev, release)")
 parser.add_argument("-t", "--tools", dest="is_tools", action="store_true", help="")
 parser.add_argument("-a", "--all", dest="is_all", action="store_true", help="")
+parser.add_argument("-r", "--run", dest="run", action="store_true", help="")
 parser.add_argument("--platform", dest="platform", default="pc", choices=["pc"], help="")
 args = parser.parse_args()
 
@@ -19,9 +21,13 @@ MODE = args.mode
 IS_TOOLS = args.is_tools
 IS_ALL = args.is_all
 PLATFORM = args.platform
+RUN = args.run
 OUTPUT = "CUC"
 CC = "gcc"
 LIBS = "-Lexternal/raylib/ -l:libraylibdll.a -lm"
+
+RUN_PROJECT = False
+RUN_TOOLS = False
 
 def get_platform_src():
     files = []
@@ -66,6 +72,10 @@ def build_project():
     print(COMMAND)
     os.system(COMMAND)
 
+    if RUN_PROJECT:
+        print(TARGET)
+        subprocess.call(TARGET)
+
 def build_tools():
     CFLAGS = "-static -I external/"
     TARGET = "tools/bin/" + MODE + "/"
@@ -91,10 +101,20 @@ def build_tools():
         print(COMMAND)
         os.system(COMMAND)
 
+        if RUN_TOOLS:
+            print(TARGET)
+            subprocess.call(TARGET + tool[0])
+
+
 if __name__ == "__main__":
+    if RUN:
+        RUN_PROJECT = True
+        RUN_TOOLS = True
+        
     if IS_TOOLS:
         build_tools()
     elif IS_ALL:
+        
         build_project()
         build_tools()
     else:

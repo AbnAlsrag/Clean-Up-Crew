@@ -70,9 +70,9 @@ bool vec2f_equal(vec2f_t a, vec2f_t b);
 float vec2f_length(vec2f_t vec);
 float vec2f_distance(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_normalize(vec2f_t vec);
-vec2f_t lerpfv2(vec2f_t a, vec2f_t b, float t);
-vec2f_t slerpfv2(vec2f_t a, vec2f_t b, float t);
-vec2f_t cartesian2polarfv2(vec2f_t vec);
+vec2f_t vec2f_lerp(vec2f_t a, vec2f_t b, float t);
+vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t);
+vec2f_t vec2f_cartesian2polar(vec2f_t vec);
 
 color_t color_from_u32(uint32_t value);
 uint32_t color_to_u32(color_t color);

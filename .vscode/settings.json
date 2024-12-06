@@ -7,6 +7,7 @@
         "*.m": "c",
         "string_view": "c",
         "variant": "c",
-        "text_encoding": "c"
+        "text_encoding": "c",
+        "functional": "c"
     }
 }

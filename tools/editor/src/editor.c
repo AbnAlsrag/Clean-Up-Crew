@@ -3,7 +3,6 @@
 #include <stdbool.h>
 
 #define RAYGUI_IMPLEMENTATION
-#include <raylib/raygui.h>
 #include <raylib/raylib.h>
 #include <raylib/rlgl.h>
 #include <raylib/raymath.h>

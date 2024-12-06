@@ -17,7 +17,6 @@ void draw_room(room_index_t index);
 clue_stack_t *get_room_front_clue_stack(room_index_t room_index);
 clue_stack_t *get_room_back_clue_stack(room_index_t room_index);
 bool room_switch_clue_stacks(room_index_t room_index);
-// NOTE: This might be a little ineffcient but whatever :)
 
 void cuc_engine_init(void) {
     platform_config_t config = {
@@ -372,8 +371,6 @@ clue_query_t cuc_engine_query_clues(room_index_t room_index) {
     query.clue_stack_count = room->connections_count+1;
     query.clue_stacks[0] = get_room_front_clue_stack(room_index);
 
-    printf("%d\n", query.clue_stacks[0]->clue_count);
-
     for (size_t i = 1; i < query.clue_stack_count; i++) {
         query.clue_stacks[i] = get_room_front_clue_stack(room->connections[i-1].index);
     }
@@ -503,14 +500,8 @@ void cuc_tick_update(void) {
                 handler(entity->index);
             }
         }
-    }
 
-    for (room_index_t idx = 0; idx < MAX_ROOMS; idx++) {
-        if (is_room_slot_empty(idx)) {
-            continue;
-        }
-        
-        room_switch_clue_stacks(idx);
+        room_switch_clue_stacks(i);
     }
 }
 

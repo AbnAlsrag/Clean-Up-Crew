@@ -89,7 +89,7 @@ void dog_handler(entity_id_t id) {
             if (clue.clue_type == SMELL_CLUE) {
                 vec2f_t entity_pos = { entity->pos.x, entity->pos.y };
 
-                entity_pos = lerpfv2(entity_pos, clue.pos, 0.01f);
+                entity_pos = vec2f_lerp(entity_pos, clue.pos, 0.01f);
                 entity->pos.x = entity_pos.x;
                 entity->pos.y = entity_pos.y;
             }

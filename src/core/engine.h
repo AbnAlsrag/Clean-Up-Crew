@@ -186,12 +186,6 @@ room_t *cuc_engine_get_room_using_id(room_id_t room_id);
 room_id_t cuc_engine_room_index_to_id(room_index_t room_index);
 room_index_t cuc_engine_room_id_to_index(room_id_t room_id);
 
-// NOTE: The clue system designed so the clue stacks are cleared each tick but this raises the possiblity 
-// that if an entity's handler is ran before another it won't get a clue that is emitted in the same 
-// frame i won't do anything for now but keep this in mind when debugging and later i might implement sth
-// like backbuffering in graphics emitted clues can only be accessed in the next frame and accessed one's are from
-// the last frame :>
-
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue);
 clue_query_t cuc_engine_query_clues(room_index_t room_index);
 
