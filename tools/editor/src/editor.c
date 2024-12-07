@@ -52,54 +52,15 @@ void draw_map_editor(void) {
 }
 
 int main(void) {
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(0, 0, "CUC Editor");
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
     MaximizeWindow();
     SetTargetFPS(60);
 
-    bool x = false;
-    size_t active_tab = 0;
-    imgui_string_t tabs[] = {
-        imgui_String("map editor"),
-        imgui_String("entity editor"),
-        imgui_String("resource manger"),
-        imgui_String("localization editor")
-    };
-    imgui_string_t contex_items[] = {
-        imgui_String("create room"),
-    };
-    Color color;
-    float value = 0.0f;
-    float value2 = 0.0f;
-    char text_data[100] = {0};
-    size_t contex_item = IMGUI_UNLIMITED;
-    bool room_menu = false;
-
     while (!WindowShouldClose()) {
-        // printf("value = %f\n", value);
         BeginDrawing();
-            ClearBackground(RAYWHITE);
-            if (active_tab == MAP_EDITOR_INDEX) {
-                draw_map_editor();
-            }
-            if (room_menu) {
-                contex_item = imgui_contex_menu(tabs, sizeof(tabs)/sizeof(tabs[0]));
-                if (contex_item == 1) {
-                    room_menu = false;
-                }
-            } else {
-                imgui_rect((imgui_rect_t) { 50, 300, 350, 50 }, 5.0f, IMGUI_COLOR_BLACK, IMGUI_COLOR_RED);
-                contex_item = imgui_contex_menu(contex_items, sizeof(contex_items)/sizeof(contex_items[0]));
+        ClearBackground(RAYWHITE);
 
-                if (contex_item == 0) {
-                    room_menu = true;
-                }
-                // value = imgui_slider((imgui_rect_t) { 50, 60, 350, 50 }, imgui_String("0"), imgui_String("10"), value, 0, 10);
-                // GuiSliderBar((Rectangle) { 50, 150, 150, 50 }, "0", "10", &value, 0, 10);
-                // GuiSliderBar((Rectangle) { 50, 150, 250, 50 }, "0", "10", &value2, 0, 10);
-                // if (GuiTextBox((Rectangle) { 50, 150, 250, 50 }, text_data, 100, x)) x = true;
-            }
-            active_tab = imgui_tab_menu((imgui_rect_t) { 0, 0, GetScreenWidth(), 50 }, tabs, sizeof(tabs)/sizeof(tabs[0]), active_tab);
         EndDrawing();
     }
 

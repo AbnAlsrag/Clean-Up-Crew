@@ -12,6 +12,7 @@ typedef struct internal_data_t {
     bool is_camera_active;
     platform_camera_t active_camera;
     bool is_wireframe_mode_active;
+    bool toggle_borderless_windowed;
 } internal_data_t;
 
 static internal_data_t internal_data = {0};
@@ -37,8 +38,11 @@ RenderTexture2D frame_buffer_to_raylibe_RenderTexture2D(platform_frame_buffer_t 
 
 // TODO: fix the windowed fullscreen mode
 void platform_init(platform_config_t config) {
-    SetConfigFlags(get_raylib_config_flags(config.config_flags));
     InitWindow(config.width, config.height, config.title);
+    // i think SetConfigFlags was the reason windowed fullscreen didn't work
+    // SetConfigFlags(get_raylib_config_flags(config.config_flags));
+    SetWindowState(get_raylib_config_flags(config.config_flags));
+
     SetTargetFPS(config.target_fps);
 
     InitAudioDevice();
@@ -471,7 +475,8 @@ uint32_t get_raylib_config_flags(platform_config_flags_t config_flags) {
     }
 
     if (config_flags & PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED) {
-        result |= FLAG_BORDERLESS_WINDOWED_MODE;
+        // internal_data.toggle_borderless_windowed = true;
+        result |= FLAG_BORDERLESS_WINDOWED_MODE | FLAG_WINDOW_MAXIMIZED;
     }
 
     if (config_flags & PLATFORM_CONFIG_FLAG_RESIZABLE) {

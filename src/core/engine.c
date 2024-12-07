@@ -118,7 +118,7 @@ void cuc_engine_update(void) {
         platform_end_camera();
         platform_end_viewport();
     }
-        platform_draw_fps((vec2f_t) { 10, 10 });
+        platform_draw_fps((vec2f_t) { 0, 0 });
     platform_end_drawing();
 
     for (size_t i = 0; i < MAX_ROOMS; i++) {
