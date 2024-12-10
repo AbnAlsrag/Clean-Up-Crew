@@ -12,8 +12,11 @@ bool is_entity_slot_empty(entity_index_t entity_index);
 bool set_entity_slot(entity_index_t entity_index, bool value);
 bool is_room_slot_empty(room_index_t index);
 bool set_room_slot(room_index_t index, bool value);
+bool is_texture_slot_empty(texture_index_t index);
+bool set_texture_slot(texture_index_t index, bool value);
 bool room_push_draw_call(room_index_t index, draw_call_t draw_call);
 void draw_room(room_index_t index);
+void draw_draw_call(draw_call_t draw_call);
 clue_stack_t *get_room_front_clue_stack(room_index_t room_index);
 clue_stack_t *get_room_back_clue_stack(room_index_t room_index);
 bool room_switch_clue_stacks(room_index_t room_index);
@@ -23,7 +26,7 @@ void cuc_engine_init(void) {
         .width = 0, .height = 0,
         .title = "CUC",
         .target_fps = 60,
-        .config_flags = PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED | PLATFORM_CONFIG_FLAG_VSYNC*0,
+        .config_flags = PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED | PLATFORM_CONFIG_FLAG_VSYNC,
     };
 
     platform_init(config);
@@ -112,9 +115,9 @@ void cuc_engine_update(void) {
         platform_begin_camera(splitscreen->player.camera);
             platform_clear_background(COLOR_BLACK);
             // platform_clear_background(COLOR_RED);
-            draw_room(player_entity->pos.room_index);
+            draw_room(player_entity->room);
             
-            drawn_rooms[player_entity->pos.room_index] = true;
+            drawn_rooms[player_entity->room] = true;
         platform_end_camera();
         platform_end_viewport();
     }
@@ -350,6 +353,78 @@ room_index_t cuc_engine_room_id_to_index(room_id_t room_id) {
     return ILLEGAL_ROOM_ID;
 }
 
+texture_index_t cuc_engine_load_texture(const char *path, texture_id_t id) {
+    texture_index_t idx = 0;
+    bool found_sth = false;
+
+    for (; idx < MAX_LOADED_TEXTURES && idx != ILLEGAL_TEXTURE_ID; idx++) {
+        if (is_room_slot_empty(idx)) {
+            loaded_texture_t texture = {
+                .id = id,
+                .texture = platform_load_texture(path),
+            };
+
+            if (!platform_is_texture_valid(texture.texture)) {
+                found_sth = false;
+                break;
+            }
+            
+            set_texture_slot(idx, true);
+            engine.textures[idx] = texture;
+            found_sth = true;
+            break;
+        }
+    }
+
+    if (!found_sth) {
+        return ILLEGAL_TEXTURE_ID;
+    }
+
+    return idx;
+}
+
+bool cuc_engine_unload_texture(texture_index_t index) {
+    return set_texture_slot(index, false);
+}
+
+loaded_texture_t *cuc_engine_get_texture(texture_index_t index) {
+    if (index >= MAX_LOADED_TEXTURES) {
+        return NULL;
+    }
+
+    if (index == ILLEGAL_TEXTURE_ID) {
+        return NULL;
+    }
+
+    if (is_texture_slot_empty(index)) {
+        return NULL;
+    }
+    
+    return &engine.textures[index];
+}
+
+rectf_t cuc_engine_get_texture_src_rect(texture_index_t index) {
+    rectf_t result = RECTANGLE_ZERO;
+    
+    if (index >= MAX_LOADED_TEXTURES) {
+        return RECTANGLE_ZERO;
+    }
+
+    if (index == ILLEGAL_TEXTURE_ID) {
+        return RECTANGLE_ZERO;
+    }
+
+    if (is_texture_slot_empty(index)) {
+        return RECTANGLE_ZERO;
+    }
+
+    platform_texture_t texture = engine.textures[index].texture;
+
+    result = (rectf_t) { 0.0f, 0.0f, texture.width, texture.height };
+
+    return result;
+}
+
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue) {
     clue_stack_t *back_clue_stack = get_room_back_clue_stack(room_index);
 
@@ -388,12 +463,29 @@ bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer) {
     return true;
 }
 
-bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, color_t color) {
+bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin, float rotation, color_t color) {
     draw_call_t draw_call = {
         .kind = DRAW_CALL_KIND_RECT,
-        .as = { .rect = { .rect = rect, .color = color } },
+        .as = { .rect = { .rect = rect, .origin = origin, .rotation = rotation, .color = color } },
     };
 
+    return room_push_draw_call(room_index, draw_call);
+}
+
+bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation) {
+    texture_draw_call_t texture_draw_call = {
+        .index = texture_index,
+        .src = src,
+        .dest = dest,
+        .origin = origin,
+        .rotation = rotation,
+    };
+    
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_KIND_TEXTURE,
+        .as = { .texture = texture_draw_call },
+    };
+    
     return room_push_draw_call(room_index, draw_call);
 }
 
@@ -547,7 +639,7 @@ bool is_room_slot_empty(room_index_t room_index) {
 
     size_t index = room_index/8;
     uint8_t mask = 1 << (room_index%8);
-    return (engine.room_slots[index]&mask) == 0; 
+    return (engine.room_slots[index]&mask) == 0;
 }
 
 bool set_room_slot(room_index_t room_index, bool value) {
@@ -563,6 +655,37 @@ bool set_room_slot(room_index_t room_index, bool value) {
     uint8_t mask = 1 << (room_index%8);
     engine.room_slots[index] &= ~mask;
     engine.room_slots[index] |= (value&1) << (room_index%8);
+
+    return true;
+}
+
+bool is_texture_slot_empty(texture_index_t index) {
+    if (index >= MAX_LOADED_TEXTURES) {
+        return false;
+    }
+
+    if (index == ILLEGAL_TEXTURE_ID) {
+        return false;
+    }
+
+    size_t idx = index/8;
+    uint8_t mask = 1 << (index%8);
+    return (engine.room_slots[idx]&mask) == 0;
+}
+
+bool set_texture_slot(texture_index_t index, bool value) {
+    if (index >= MAX_LOADED_TEXTURES) {
+        return false;
+    }
+
+    if (index == ILLEGAL_TEXTURE_ID) {
+        return false;
+    }
+
+    size_t idx = index/8;
+    uint8_t mask = 1 << (index%8);
+    engine.room_slots[idx] &= ~mask;
+    engine.room_slots[idx] |= (value&1) << (index%8);
 
     return true;
 }
@@ -591,17 +714,40 @@ void draw_room(room_index_t index) {
         for (size_t j = 0; j < draw_layer.draw_call_count && j < MAX_DRAW_CALLS; j++) {
             draw_call_t draw_call = draw_layer.draw_calls[j];
 
-            switch (draw_call.kind) {
-            case DRAW_CALL_KIND_RECT: {
-                rect_draw_call_t rect_draw_call = draw_call.as.rect;
-                
-                platform_draw_rect(rect_draw_call.rect, (vec2f_t) { rect_draw_call.rect.width/2.0f, rect_draw_call.rect.height/2.0f }, 0.0f, rect_draw_call.color);
-            }break;
-            default: {
-                assert(0 && "Unknown draw call");
-            }break;
-            }
+            draw_draw_call(draw_call);
         }
+    }
+}
+
+void draw_draw_call(draw_call_t draw_call) {
+    switch (draw_call.kind) {
+    case DRAW_CALL_KIND_RECT: {
+        rect_draw_call_t rect_draw_call = draw_call.as.rect;
+        
+        platform_draw_rect(
+            rect_draw_call.rect, rect_draw_call.origin,
+            rect_draw_call.rotation, rect_draw_call.color);
+    }break;
+    case DRAW_CALL_KIND_TEXTURE: {
+        texture_draw_call_t texture_draw_call = draw_call.as.texture;
+
+        loaded_texture_t *loaded_texture = cuc_engine_get_texture(texture_draw_call.index);
+
+        // NOTE: add logging
+        if (loaded_texture == NULL) {
+            return;
+        }
+
+        platform_texture_t texture = loaded_texture->texture;
+
+        platform_draw_texture(
+            texture, texture_draw_call.src,
+            texture_draw_call.dest, texture_draw_call.origin,
+            texture_draw_call.rotation, COLOR_WHITE);
+    }break;
+    default: {
+        assert(0 && "Unknown draw call");
+    }break;
     }
 }
 

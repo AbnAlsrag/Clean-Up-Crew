@@ -4,13 +4,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// TODO: namespace everything in cuc_utils or something else
+
+#ifndef EPSILON
 #define EPSILON 0.000001f
+#endif
+
+#ifndef PI
+#define PI 3.14159265358979323846f
+#endif
 
 #define VECTOR2_FMT "(vec2f_t) { %f, %f }"
 #define VECTOR2_ARG(__MACRO_INPUT_VEC__) (__MACRO_INPUT_VEC__).x, (__MACRO_INPUT_VEC__).y
-#define VECTOR2_ZERO (vec2f_t) { 0, 0 }
+#define VECTOR2_ZERO ((vec2f_t) { 0.0f, 0.0f })
+#define VECTOR2_UP ((vec2f_t) { 0.0f, 1.0f })
+#define VECTOR2_DOWN ((vec2f_t) { 0.0f, -1.0f })
+#define VECTOR2_RIGHT ((vec2f_t) { 1.0f, 0.0f })
+#define VECTOR2_LEFT ((vec2f_t) { -1.0f, 0.0f })
 #define RECTANGLE_FMT "(rectf_t) { %f, %f, %f, %f }"
 #define RECTANGLE_ARG(__MACRO_INPUT_RECTANGLE__) (__MACRO_INPUT_RECTANGLE__).x, (__MACRO_INPUT_RECTANGLE__).y, (__MACRO_INPUT_RECTANGLE__).width, (__MACRO_INPUT_RECTANGLE__).height
+#define RECTANGLE_ZERO ((rectf_t) { 0.0f, 0.0f, 0.0f, 0.0f })
 
 #define COLOR_LIGHTGRAY  (color_t) { 200, 200, 200, 255 }
 #define COLOR_GRAY       (color_t) { 130, 130, 130, 255 }
@@ -56,6 +69,9 @@ typedef struct color_t {
     uint8_t a;
 } color_t;
 
+float deg_to_radf(float angle);
+float rad_to_degf(float angle);
+float clampf(float value, float min, float max);
 float lerpf(float a, float b, float t);
 
 vec2f_t vec2f_add(vec2f_t a, vec2f_t b);
@@ -66,9 +82,17 @@ vec2f_t vec2f_mult(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_mult_value(vec2f_t a, float b);
 vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_div_value(vec2f_t a, float b);
+vec2f_t vec2f_invert(vec2f_t vec);
+vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max);
+vec2f_t vec2f_clamp_value(vec2f_t vec, float min, float max);
 bool vec2f_equal(vec2f_t a, vec2f_t b);
 float vec2f_length(vec2f_t vec);
 float vec2f_distance(vec2f_t a, vec2f_t b);
+float vec2f_direction(vec2f_t a, vec2f_t b);
+float vec2f_angle(vec2f_t vec);
+vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect);
+vec2f_t vec2f_move(vec2f_t vec, float angle, float distance);
+vec2f_t vec2f_move_towards(vec2f_t start, vec2f_t target, float distance);
 vec2f_t vec2f_normalize(vec2f_t vec);
 vec2f_t vec2f_lerp(vec2f_t a, vec2f_t b, float t);
 vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t);

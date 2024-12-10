@@ -22,6 +22,8 @@ BlendMode get_raylib_blend_mode(platform_blend_mode_t mode);
 KeyboardKey get_raylib_keyboard_key(platform_keycode_t keycode);
 platform_keycode_t get_key_code(KeyboardKey key);
 MouseButton get_raylib_mouse_button(platform_mouse_button_t mouse_button);
+GamepadButton gamepad_button_to_raylib_GamepadButton(platform_gamepad_button_t gamepad_button);
+GamepadAxis gamepad_axis_to_raylib_GamepadAxis(platform_gamepad_axis_t gamepad_axis);
 vec2f_t raylib_Vector2_to_vec2f(Vector2 vec);
 Vector2 vec2f_to_raylib_Vector2(vec2f_t vec);
 color_t raylib_Color_to_color(Color color);
@@ -36,13 +38,18 @@ platform_sound_t raylib_Sound_to_sound(Sound sound);
 Sound sound_to_raylib_Sound(platform_sound_t sound);
 RenderTexture2D frame_buffer_to_raylibe_RenderTexture2D(platform_frame_buffer_t frame_buffer);
 
-// TODO: fix the windowed fullscreen mode
+#include <stdio.h>
+
 void platform_init(platform_config_t config) {
     InitWindow(config.width, config.height, config.title);
-    // i think SetConfigFlags was the reason windowed fullscreen didn't work
-    // SetConfigFlags(get_raylib_config_flags(config.config_flags));
     SetWindowState(get_raylib_config_flags(config.config_flags));
 
+    if (config.config_flags & PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED) {
+        ToggleFullscreen();
+        ToggleFullscreen();
+        SetWindowState(get_raylib_config_flags(config.config_flags));
+    }
+    
     SetTargetFPS(config.target_fps);
 
     InitAudioDevice();
@@ -138,6 +145,30 @@ vec2f_t platform_get_mouse_delta(void) {
 
 vec2f_t platform_get_mouse_wheel(void) {
     return raylib_Vector2_to_vec2f(GetMouseWheelMoveV());
+}
+
+bool platform_is_gamepad_present(gamepad_id_t id) {
+    return IsGamepadAvailable(id);
+}
+
+bool platform_is_gamepad_button_pressed(gamepad_id_t id, platform_gamepad_button_t button) {
+    return IsGamepadButtonPressed(id, gamepad_button_to_raylib_GamepadButton(button));
+}
+
+bool platform_is_gamepad_button_down(gamepad_id_t id, platform_gamepad_button_t button) {
+    return IsGamepadButtonDown(id, gamepad_button_to_raylib_GamepadButton(button));
+}
+
+bool platform_is_gamepad_button_released(gamepad_id_t id, platform_gamepad_button_t button) {
+    return IsGamepadButtonReleased(id, gamepad_button_to_raylib_GamepadButton(button));
+}
+
+bool platform_is_gamepad_button_up(gamepad_id_t id, platform_gamepad_button_t button) {
+    return IsGamepadButtonUp(id, gamepad_button_to_raylib_GamepadButton(button));
+}
+
+float platform_get_gamepad_axis(gamepad_id_t id, platform_gamepad_axis_t axis) {
+    return GetGamepadAxisMovement(id, gamepad_axis_to_raylib_GamepadAxis(axis));
 }
 
 void platform_set_master_volume(float volume) {
@@ -362,7 +393,7 @@ vec2f_t platform_get_screen_to_world(platform_camera_t camera, vec2f_t pos) {
     return raylib_Vector2_to_vec2f(GetScreenToWorld2D(vec2f_to_raylib_Vector2(pos), camera_to_raylib_Camera2D(camera)));
 }
 
-platform_texture_t platform_load_texture(char *file_path) {
+platform_texture_t platform_load_texture(const char *file_path) {
     return raylib_Texture2D_to_texture(LoadTexture(file_path));
 }
 
@@ -471,12 +502,13 @@ uint32_t get_raylib_config_flags(platform_config_flags_t config_flags) {
     }
 
     if (config_flags & PLATFORM_CONFIG_FLAG_FULLSCREEN) {
-        result |= FLAG_FULLSCREEN_MODE | FLAG_WINDOW_MAXIMIZED;
+        result |= FLAG_FULLSCREEN_MODE;
     }
 
     if (config_flags & PLATFORM_CONFIG_FLAG_BORDERLESS_WINDOWED) {
         // internal_data.toggle_borderless_windowed = true;
-        result |= FLAG_BORDERLESS_WINDOWED_MODE | FLAG_WINDOW_MAXIMIZED;
+        // result |= FLAG_BORDERLESS_WINDOWED_MODE | FLAG_WINDOW_MAXIMIZED;
+        result |= FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_MAXIMIZED;
     }
 
     if (config_flags & PLATFORM_CONFIG_FLAG_RESIZABLE) {
@@ -738,6 +770,16 @@ MouseButton get_raylib_mouse_button(platform_mouse_button_t mouse_button) {
     }
 
     return 0;
+}
+
+// TODO: implement this properly
+GamepadButton gamepad_button_to_raylib_GamepadButton(platform_gamepad_button_t gamepad_button) {
+    return gamepad_button;
+}
+
+// TODO: implement this properly
+GamepadAxis gamepad_axis_to_raylib_GamepadAxis(platform_gamepad_axis_t gamepad_axis) {
+    return gamepad_axis;
 }
 
 vec2f_t raylib_Vector2_to_vec2f(Vector2 vec) {

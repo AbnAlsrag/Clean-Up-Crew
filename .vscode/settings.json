@@ -8,6 +8,11 @@
         "string_view": "c",
         "variant": "c",
         "text_encoding": "c",
-        "functional": "c"
+        "functional": "c",
+        "random": "c",
+        "charconv": "c",
+        "array": "c",
+        "tuple": "c",
+        "utility": "c"
     }
 }

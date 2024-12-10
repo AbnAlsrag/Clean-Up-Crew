@@ -1,7 +1,7 @@
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
 
-#include "core/utils.h"
+#include "core/cuc_utils.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -134,6 +134,8 @@ typedef enum platform_keycode_t {
     PLATFORM_KEYCODE_VOLUME_DOWN,         // Key: Android volume down button
 } platform_keycode_t;
 
+typedef uint16_t gamepad_id_t;
+
 typedef enum platform_mouse_button_t {
     PLATFORM_MOUSE_BUTTON_LEFT = 0,      // Mouse button left
     PLATFORM_MOUSE_BUTTON_RIGHT,         // Mouse button right
@@ -143,6 +145,36 @@ typedef enum platform_mouse_button_t {
     PLATFORM_MOUSE_BUTTON_FORWARD,       // Mouse button forward (advanced mouse device)
     PLATFORM_MOUSE_BUTTON_BACK,          // Mouse button back (advanced mouse device)
 } platform_mouse_button_t;
+
+typedef enum platform_gamepad_button_t {
+    PLATFORM_GAMEPAD_BUTTON_UNKNOWN = 0,         // Unknown button, just for error checking
+    PLATFORM_GAMEPAD_BUTTON_LEFT_FACE_UP,        // Gamepad left DPAD up button
+    PLATFORM_GAMEPAD_BUTTON_LEFT_FACE_RIGHT,     // Gamepad left DPAD right button
+    PLATFORM_GAMEPAD_BUTTON_LEFT_FACE_DOWN,      // Gamepad left DPAD down button
+    PLATFORM_GAMEPAD_BUTTON_LEFT_FACE_LEFT,      // Gamepad left DPAD left button
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_UP,       // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,    // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_DOWN,     // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_LEFT,     // Gamepad right button left (i.e. PS3: Square, Xbox: X)
+    PLATFORM_GAMEPAD_BUTTON_LEFT_TRIGGER_1,      // Gamepad top/back trigger left (first), it could be a trailing button
+    PLATFORM_GAMEPAD_BUTTON_LEFT_TRIGGER_2,      // Gamepad top/back trigger left (second), it could be a trailing button
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_TRIGGER_1,     // Gamepad top/back trigger right (first), it could be a trailing button
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_TRIGGER_2,     // Gamepad top/back trigger right (second), it could be a trailing button
+    PLATFORM_GAMEPAD_BUTTON_MIDDLE_LEFT,         // Gamepad center buttons, left one (i.e. PS3: Select)
+    PLATFORM_GAMEPAD_BUTTON_MIDDLE,              // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+    PLATFORM_GAMEPAD_BUTTON_MIDDLE_RIGHT,        // Gamepad center buttons, right one (i.e. PS3: Start)
+    PLATFORM_GAMEPAD_BUTTON_LEFT_THUMB,          // Gamepad joystick pressed button left
+    PLATFORM_GAMEPAD_BUTTON_RIGHT_THUMB,         // Gamepad joystick pressed button right
+} platform_gamepad_button_t;
+
+typedef enum platform_gamepad_axis_t {
+    PLATFORM_GAMEPAD_AXIS_LEFT_X = 0,            // Gamepad left stick X axis
+    PLATFORM_GAMEPAD_AXIS_LEFT_Y,                // Gamepad left stick Y axis
+    PLATFORM_GAMEPAD_AXIS_RIGHT_X,               // Gamepad right stick X axis
+    PLATFORM_GAMEPAD_AXIS_RIGHT_Y,               // Gamepad right stick Y axis
+    PLATFORM_GAMEPAD_AXIS_LEFT_TRIGGER,          // Gamepad back trigger left, pressure level: [1..-1]
+    PLATFORM_GAMEPAD_AXIS_RIGHT_TRIGGER,         // Gamepad back trigger right, pressure level: [1..-1]
+} platform_gamepad_axis_t;
 
 typedef struct platform_audio_stream_t {
     void *buffer;
@@ -215,6 +247,15 @@ void platform_set_mouse_position(vec2f_t position);
 vec2f_t platform_get_mouse_delta(void);
 vec2f_t platform_get_mouse_wheel(void);
 
+bool platform_is_gamepad_present(gamepad_id_t id);
+// const char *platform_get_gamepad_name(gamepad_id_t id);
+bool platform_is_gamepad_button_pressed(gamepad_id_t id, platform_gamepad_button_t button);
+bool platform_is_gamepad_button_down(gamepad_id_t id, platform_gamepad_button_t button);
+bool platform_is_gamepad_button_released(gamepad_id_t id, platform_gamepad_button_t button);
+bool platform_is_gamepad_button_up(gamepad_id_t id, platform_gamepad_button_t button);
+// platform_gamepad_button_t platform_get_gamepad_button_pressed(gamepad_id_t id);
+float platform_get_gamepad_axis(gamepad_id_t id, platform_gamepad_axis_t axis);
+
 void platform_set_master_volume(float volume);
 float platform_get_master_volume(void);
 platform_sound_t platform_load_sound(char *file_path);
@@ -247,7 +288,7 @@ void platform_end_wireframe_mode(void);
 vec2f_t platform_get_world_to_screen(platform_camera_t camera, vec2f_t pos);
 vec2f_t platform_get_screen_to_world(platform_camera_t camera, vec2f_t pos);
 
-platform_texture_t platform_load_texture(char *file_path);
+platform_texture_t platform_load_texture(const char *file_path);
 bool platform_is_texture_valid(platform_texture_t texture);
 void platform_unload_texture(platform_texture_t texture);
 platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t height);

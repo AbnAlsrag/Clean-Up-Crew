@@ -1,122 +1,98 @@
 #include "core/engine.h"
+#include "core/cuc_utils.h"
 #include "platform/platform.h"
 
 #include <stdio.h>
 #include <math.h>
 
-#define SMELL_CLUE 0
+#define PLAYER_CLUE 0
 
-bool toggle_smell_clue = false;
+texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
+vec2f_t velocity0 = { 0.0f, 0.0f };
+vec2f_t velocity1 = { 0.0f, 0.0f };
+float angle0 = 0.0f;
+float angle1 = 0.0f;
+vec2f_t last_move_axis0 = { 0.0f, 0.0f };
+float time0 = 0.0f;
 
-void player_handler(entity_id_t id) {
-    entity_t *entity = cuc_engine_get_entity(id);
-    splitscreen_t *splitscreen;
-
-    if (!cuc_engine_is_entity_splitscreen_player(id, &splitscreen)) {
-        return;
-    }
-
-    player_t *player = &splitscreen->player;
-
+void player0_handler(entity_index_t index) {
+    entity_t *entity = cuc_engine_get_entity(index);
     float dt = cuc_engine_get_tick_delta();
-    float speed = 400.0f;
-    speed = speed*dt;
-    vec2f_t velocity = VECTOR2_ZERO;
 
-    if (platform_is_key_down(PLATFORM_KEYCODE_W)) {
-        velocity.y = -1;
-    } else if (platform_is_key_down(PLATFORM_KEYCODE_S)) {
-        velocity.y = 1;
+    float acceleration = 5.0f;
+    float deceleration = 0.5f; // Add some deceleration
+    vec2f_t move_axis = VECTOR2_ZERO;
+
+    move_axis.x = platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_X);
+    move_axis.y = platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_Y);
+
+    // Threshold for detecting valid input
+    const float dead_zone = 0.1f;
+
+    if (fabs(move_axis.x) < dead_zone) move_axis.x = 0.0f;
+    if (fabs(move_axis.y) < dead_zone) move_axis.y = 0.0f;
+
+    // Normalize movement direction
+    if (vec2f_length(move_axis) > 0.5f) {
+        move_axis = vec2f_normalize(move_axis);
+    } else {
+        move_axis = VECTOR2_ZERO;
     }
 
-    if (platform_is_key_down(PLATFORM_KEYCODE_A)) {
-        velocity.x = -1;
-    } else if (platform_is_key_down(PLATFORM_KEYCODE_D)) {
-        velocity.x = 1;
+    // Apply acceleration based on input
+    velocity0.x += (acceleration * move_axis.x) * dt;
+    velocity0.y += (acceleration * move_axis.y) * dt;
+
+    // Apply deceleration when no input
+    if (vec2f_equal(move_axis, VECTOR2_ZERO)) {
+        velocity0.x *= (1.0f - deceleration * dt);
+        velocity0.y *= (1.0f - deceleration * dt);
     }
 
-    // velocity = vec2f_normalize(velocity);
-    velocity = vec2f_normalize(velocity);
+    // Clamp to max speed (optional)
+    const float max_speed = 200.0f;
+    velocity0.x = fminf(fmaxf(velocity0.x, -max_speed), max_speed);
+    velocity0.y = fminf(fmaxf(velocity0.y, -max_speed), max_speed);
 
-    entity->pos.x += velocity.x*speed;
-    entity->pos.y += velocity.y*speed;
+    // Update position based on velocity
+    entity->pos = vec2f_add(entity->pos, vec2f_mult_value(velocity0, dt));
 
-    player->camera.target.x = entity->pos.x;
-    player->camera.target.y = entity->pos.y;
+    // Wrap position around the window
+    rectf_t window_rect = (rectf_t) {
+        .x = -100.0f,
+        .y = -100.0f,
+        .width = platform_get_window_size().x + 200.0f,
+        .height = platform_get_window_size().y + 200.0f,
+    };
+    entity->pos = vec2f_wrap_rect(entity->pos, window_rect);
 
-    player->camera.offset = vec2f_div_value((vec2f_t) { splitscreen->viewport.width, splitscreen->viewport.height }, 2.0f);
-
-    cuc_engine_set_current_draw_layer(0);
-    cuc_engine_draw_rect(entity->pos.room_index, (rectf_t) { 0, 0, splitscreen->viewport.width, splitscreen->viewport.height }, COLOR_WHITE);
-
-    cuc_engine_set_current_draw_layer(1);
-    cuc_engine_draw_rect(entity->pos.room_index, (rectf_t) { entity->pos.x, entity->pos.y, 100, 100 }, COLOR_RED);
-
-    if (platform_is_key_pressed(PLATFORM_KEYCODE_F)) {
-        toggle_smell_clue = !toggle_smell_clue;
-        // cuc_engine_quit();
-    }
-
-    if (toggle_smell_clue) {
-        clue_t clue = {
-            .clue_type = SMELL_CLUE,
-            .intensity = 1.0f,
-            .pos = (clue_pos_t) { .x = entity->pos.x, .y = entity->pos.y },
-        };
-
-        cuc_engine_emit_clue(entity->pos.room_index, clue);
-    }
-}
-
-void dog_handler(entity_id_t id) {
-    entity_t *entity = cuc_engine_get_entity(id);
-
-    if (entity == NULL) {
-        return;
-    }
-
-    cuc_engine_set_current_draw_layer(1);
-    cuc_engine_draw_rect(entity->pos.room_index, (rectf_t) { entity->pos.x, entity->pos.y, 100, 50 }, COLOR_BEIGE);
-
-    clue_query_t query = cuc_engine_query_clues(entity->pos.room_index);
-
-    for (size_t i = 0; i < query.clue_stack_count; i++) {
-        clue_stack_t *clue_stack = query.clue_stacks[i];
-        
-        for (size_t j = 0; j < clue_stack->clue_count; j++) {
-            clue_t clue = clue_stack->clues[j];
-            
-            if (clue.clue_type == SMELL_CLUE) {
-                vec2f_t entity_pos = { entity->pos.x, entity->pos.y };
-
-                entity_pos = vec2f_lerp(entity_pos, clue.pos, 0.01f);
-                entity->pos.x = entity_pos.x;
-                entity->pos.y = entity_pos.y;
-            }
-        }
-    }
+    // Draw the player
+    vec2f_t texture_origin = (vec2f_t) { 100.0f / 2.0f, 100.0f / 2.0f };
+    cuc_engine_draw_texture(entity->room, player_texture,
+                            cuc_engine_get_texture_src_rect(player_texture),
+                            (rectf_t) { entity->pos.x, entity->pos.y, 100, 100 },
+                            texture_origin, angle0);
 }
 
 int main(void) {
     cuc_engine_init();
 
-    // cuc_engine_load_map("bunker.cucb");
+    player_texture = cuc_engine_load_texture("resources/imgs/test.png", 0);
 
-    cuc_engine_set_entity_handler(1, player_handler);
-    cuc_engine_set_entity_handler(2, dog_handler);
+    cuc_engine_set_entity_handler(1, player0_handler);
+    cuc_engine_set_entity_handler(3, player1_handler);
 
-    entity_pos_t players_pos = { .room_index = 0, .x = 0, .y = 0 };
-    entity_pos_t dog_pos = { .room_index = 0, .x = 150, .y = 0 };
-
-    entity_id_t player_id_0 = cuc_engine_register_entity((entity_t) { .pos = players_pos, .handler_id = 1 });
-    entity_id_t dog_id_0 = cuc_engine_register_entity((entity_t) { .pos = dog_pos, .handler_id = 2 });
+    entity_id_t player_id_0 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 1 });
+    entity_id_t player_id_1 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 3 });
+    entity_id_t goose_id = cuc_engine_register_entity((entity_t) { .pos = (vec2f_t) { 100, 100 }, .room = 0, .handler_id = 2 });
 
     cuc_engine_register_splitscreen((player_t) { .id = player_id_0 }, NULL);
 
     room_t room_0 = {0};
-    room_0.entity_count = 2;
+    room_0.entity_count = 3;
     room_0.entities[0] = player_id_0;
-    room_0.entities[1] = dog_id_0;
+    room_0.entities[1] = goose_id;
+    room_0.entities[2] = player_id_1;
     room_0.id = 0;
     room_0.pos = (room_pos_t) { .x = 0, .y = 0, .width = 500, .height = 500 };
 

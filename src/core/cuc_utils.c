@@ -1,6 +1,26 @@
-#include "utils.h"
+#include "cuc_utils.h"
 
 #include <math.h>
+
+float deg_to_radf(float angle) {
+    return (angle * PI / 180.0f);
+}
+
+float rad_to_degf(float angle) {
+    return (angle * 180.0f / PI);
+}
+
+float clampf(float value, float min, float max) {
+    if (value <= min) {
+        return min;
+    }
+
+    if (value >= max) {
+        return max;
+    }
+
+    return value;
+}
 
 float lerpf(float a, float b, float t) {
     return (1 - t) * a + t * b;
@@ -46,11 +66,75 @@ float vec2f_length(vec2f_t vec) {
 }
 
 float vec2f_distance(vec2f_t a, vec2f_t b) {
-    return sqrtf((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+    float dx = b.x - a.x;
+    float dy = b.y - a.y;
+    return sqrtf(dx * dx + dy * dy);
+}
+
+float vec2f_direction(vec2f_t a, vec2f_t b) {
+    return rad_to_degf(atan2f(b.y - a.y, b.x - a.x));
+}
+
+float vec2f_angle(vec2f_t vec) {
+    if (vec.x == 0.0f && vec.y == 0.0f) return 0.0f;
+    return rad_to_degf(atan2f(vec.y, vec.x));
+}
+
+vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect) {
+    vec2f_t result = VECTOR2_ZERO;
+
+    if (vec.x < rect.x) {
+        result.x = (rect.x + rect.width) - (rect.x - vec.x);
+    } else if (vec.x > rect.x + rect.width) {
+        result.x = rect.x + (vec.x - (rect.x + rect.width));
+    } else {
+        result.x = vec.x;
+    }
+
+    if (vec.y < rect.y) {
+        result.y = (rect.y + rect.height) - (rect.y - vec.y);
+    } else if (vec.y > rect.y + rect.height) {
+        result.y = rect.y + (vec.y - (rect.y + rect.height));
+    } else {
+        result.y = vec.y;
+    }
+
+    return result;
+}
+
+vec2f_t vec2f_move(vec2f_t vec, float angle, float distance) {
+    vec2f_t result = VECTOR2_ZERO;
+    result.x = vec.x + cosf(deg_to_radf(angle)) * distance;
+    result.y = vec.y + sinf(deg_to_radf(angle)) * distance;
+    return result;
+}
+
+vec2f_t vec2f_move_towards(vec2f_t start, vec2f_t target, float distance) {
+    float dist = vec2f_distance(start, target);
+
+    if (dist <= distance) {
+        return target;
+    }
+
+    float angle = vec2f_direction(start, target);
+    return vec2f_move(start, angle, distance);
 }
 
 vec2f_t vec2f_div_value(vec2f_t a, float b) {
     return (vec2f_t) { a.x / b, a.y / b };
+}
+
+vec2f_t vec2f_invert(vec2f_t vec) {
+    return (vec2f_t) { -vec.x, -vec.y };
+}
+
+vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max) {
+    vec2f_t result = { .x = clampf(vec.x, min.x, max.x), .y = clampf(vec.y, min.y, max.y) };
+    return result;
+}
+
+vec2f_t vec2f_clamp_value(vec2f_t vec, float min, float max) {
+    return (vec2f_t) { .x = clampf(vec.x, min, max), .y = clampf(vec.y, min, max) };
 }
 
 vec2f_t vec2f_normalize(vec2f_t vec) {
@@ -58,11 +142,12 @@ vec2f_t vec2f_normalize(vec2f_t vec) {
 
     float length = sqrtf((vec.x*vec.x) + (vec.y*vec.y));
 
-    if (length > 0) {
-        float ilength = 1.0f/length;
-        result.x = vec.x*ilength;
-        result.y = vec.y*ilength;
+    if (length == 0.0f) {
+        return VECTOR2_ZERO;
     }
+
+    result.x = vec.x/length;
+    result.y = vec.y/length;
 
     return result;
 }

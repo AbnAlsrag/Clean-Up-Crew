@@ -1,7 +1,7 @@
 #ifndef _CUC_ENGINE_H_
 #define _CUC_ENGINE_H_
 
-#include "utils.h"
+#include "cuc_utils.h"
 #include "platform/platform.h"
 
 #include <stdint.h>
@@ -21,28 +21,28 @@
 #define MAX_DRAW_CALLS 15
 #define MAX_DRAW_LAYERS 4
 #define MAX_CLUE_QUERY_STACKS MAX_ROOM_CONNECTIONS+1
+#define MAX_LOADED_TEXTURES 50
+#define TEXTURE_SLOTS_SIZE ((MAX_LOADED_TEXTURES+7)/8)
 
 #define ILLEGAL_ENTITY_ID ((entity_id_t)-1)
 #define EMPTY_ENTITY_HANDLER ((entity_handler_id_t)0)
 #define ILLEGAL_ROOM_ID ((room_id_t)-1)
+#define ILLEGAL_TEXTURE_ID ((texture_id_t)-1)
 
 typedef uint16_t entity_id_t;
 typedef uint16_t entity_index_t;
 typedef uint16_t room_id_t;
 typedef uint16_t room_index_t;
 typedef uint8_t draw_layer_id_t;
+typedef uint16_t texture_id_t;
+typedef uint16_t texture_index_t;
 
-typedef void(*entity_handler_t)(entity_index_t entity_id);
+typedef void(*entity_handler_t)(entity_index_t entity_index);
 typedef uint16_t entity_handler_id_t;
 
-typedef struct entity_pos_t {
-    room_index_t room_index;
-    float x;
-    float y;
-} entity_pos_t;
-
 typedef struct entity_t {
-    entity_pos_t pos;
+    room_index_t room;
+    vec2f_t pos;
     entity_handler_id_t handler_id;
     entity_id_t id;
     entity_index_t index;
@@ -86,16 +86,28 @@ typedef struct clue_query_t {
 
 typedef struct rect_draw_call_t {
     rectf_t rect;
+    vec2f_t origin;
+    float rotation;
     color_t color;
 } rect_draw_call_t;
+
+typedef struct texture_draw_call_t {
+    texture_index_t index;
+    rectf_t src;
+    rectf_t dest;
+    vec2f_t origin;
+    float rotation;
+} texture_draw_call_t;
 
 typedef uint8_t draw_call_kind_t;
 enum {
     DRAW_CALL_KIND_RECT = 0,
+    DRAW_CALL_KIND_TEXTURE,
 };
 
 typedef union draw_call_as_t {
     rect_draw_call_t rect;
+    texture_draw_call_t texture;
 } draw_call_as_t;
 
 typedef struct draw_call_t {
@@ -139,6 +151,11 @@ typedef struct splitscreen_t {
     platform_viewport_t viewport;
 } splitscreen_t;
 
+typedef struct loaded_texture_t {
+    texture_id_t id;
+    platform_texture_t texture;
+} loaded_texture_t;
+
 typedef struct cuc_engine_t {
     splitscreen_t splitscreens[MAX_SPLITSCREENS];
     uint8_t splitscreen_count;
@@ -153,10 +170,14 @@ typedef struct cuc_engine_t {
 
     room_t rooms[MAX_ROOMS];
     uint8_t room_slots[ROOM_SLOTS_SIZE];
+
+    loaded_texture_t textures[MAX_LOADED_TEXTURES];
+    uint8_t texture_slots[TEXTURE_SLOTS_SIZE];
 } cuc_engine_t;
 
 // int x = sizeof(cuc_engine_t); 
 // int x = sizeof(room_t);
+// int x = sizeof(draw_call_t);
 
 void cuc_engine_init(void);
 void cuc_engine_deinit(void);
@@ -186,10 +207,16 @@ room_t *cuc_engine_get_room_using_id(room_id_t room_id);
 room_id_t cuc_engine_room_index_to_id(room_index_t room_index);
 room_index_t cuc_engine_room_id_to_index(room_id_t room_id);
 
+texture_index_t cuc_engine_load_texture(const char *path, texture_id_t id);
+bool cuc_engine_unload_texture(texture_index_t index);
+loaded_texture_t *cuc_engine_get_texture(texture_index_t index);
+rectf_t cuc_engine_get_texture_src_rect(texture_index_t index);
+
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue);
 clue_query_t cuc_engine_query_clues(room_index_t room_index);
 
 bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer);
-bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, color_t color);
+bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin, float rotation, color_t color);
+bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation);
 
 #endif // _CUC_ENGINE_H_
