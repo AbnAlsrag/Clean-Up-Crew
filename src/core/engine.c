@@ -33,6 +33,7 @@ void cuc_engine_init(void) {
 
     engine.screen_width = platform_get_window_size().x;
     engine.screen_height = platform_get_window_size().y;
+    engine.clear_color = COLOR_WHITE;
 }
 
 void cuc_engine_deinit(void) {
@@ -113,7 +114,7 @@ void cuc_engine_update(void) {
 
         platform_begin_viewport(splitscreen->viewport);
         platform_begin_camera(splitscreen->player.camera);
-            platform_clear_background(COLOR_BLACK);
+            platform_clear_background(engine.clear_color);
             // platform_clear_background(COLOR_RED);
             draw_room(player_entity->room);
             
@@ -451,6 +452,10 @@ clue_query_t cuc_engine_query_clues(room_index_t room_index) {
     }
 
     return query;
+}
+
+void cuc_engine_set_clear_color(color_t color) {
+    engine.clear_color = color;
 }
 
 bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer) {

@@ -173,6 +173,8 @@ typedef struct cuc_engine_t {
 
     loaded_texture_t textures[MAX_LOADED_TEXTURES];
     uint8_t texture_slots[TEXTURE_SLOTS_SIZE];
+
+    color_t clear_color;
 } cuc_engine_t;
 
 // int x = sizeof(cuc_engine_t); 
@@ -215,6 +217,7 @@ rectf_t cuc_engine_get_texture_src_rect(texture_index_t index);
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue);
 clue_query_t cuc_engine_query_clues(room_index_t room_index);
 
+void cuc_engine_set_clear_color(color_t color);
 bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer);
 bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin, float rotation, color_t color);
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation);

@@ -26,6 +26,15 @@ float lerpf(float a, float b, float t) {
     return (1 - t) * a + t * b;
 }
 
+float inv_lerpf(float a, float b, float v) {
+    return (v - a) / (b - a);
+}
+
+float remapf(float imin, float imax, float omin, float omax, float v) {
+    float t = inv_lerpf(imin, imax, v);
+    return lerpf(omin, omax, t);
+}
+
 vec2f_t vec2f_add(vec2f_t a, vec2f_t b) {
     return (vec2f_t) { a.x + b.x, a.y + b.y };
 }
@@ -124,6 +133,10 @@ vec2f_t vec2f_div_value(vec2f_t a, float b) {
     return (vec2f_t) { a.x / b, a.y / b };
 }
 
+float vec2f_dot_product(vec2f_t a, vec2f_t b) {
+    return (a.x*b.x + a.y*b.y);
+}
+
 vec2f_t vec2f_invert(vec2f_t vec) {
     return (vec2f_t) { -vec.x, -vec.y };
 }
@@ -156,12 +169,30 @@ vec2f_t vec2f_lerp(vec2f_t a, vec2f_t b, float t) {
     return (vec2f_t) { .x = lerpf(a.x, b.x, t), .y = lerpf(a.y, b.y, t) };
 }
 
+float vec2f_inv_lerp(vec2f_t a, vec2f_t b, vec2f_t v) {
+    vec2f_t ab = { b.x - a.x, b.y - a.y };
+    vec2f_t av = { v.x - a.x, v.y - a.y };
+
+    // Calculate the projection of `value - a` onto `b - a`
+    float ab_length_squared = (ab.x * ab.x + ab.y * ab.y);
+    if (ab_length_squared == 0.0f) {
+        return 0.0f; // Handle edge case where a == b
+    }
+
+    float t = (av.x * ab.x + av.y * ab.y) / ab_length_squared;
+    return t;
+}
+
 vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t) {
     return vec2f_lerp(vec2f_cartesian2polar(a), vec2f_cartesian2polar(b), t);
 }
 
 vec2f_t vec2f_cartesian2polar(vec2f_t vec) {
     return (vec2f_t) { hypotf(vec.x, vec.y), atan2f(vec.y, vec.x) };
+}
+
+vec2f_t vec2f_polar2cartesian(vec2f_t vec) {
+    return (vec2f_t) { vec.x * cosf(vec.y), vec.x * sinf(vec.y) };
 }
 
 color_t color_from_u32(uint32_t value) {
@@ -189,4 +220,60 @@ color_t color_lerpf(color_t a, color_t b, float t) {
     float ra = lerpf(aa, ba, t);
 
     return (color_t) { (uint8_t)(rr*255.0f), (uint8_t)(rg*255.0f), (uint8_t)(rb*255.0f), (uint8_t)(ra*255.0f) };
+}
+
+bool check_collision_aabb_aabb(aabb_t a, aabb_t b) {
+    return (a.x < (b.x + b.width) && (a.x + a.width) > b.x) &&
+        (a.y < (b.y + b.height) && (a.y + a.height) > b.y);
+}
+
+bool check_collision_aabb_point(aabb_t aabb, vec2f_t point) {
+    return (point.x >= aabb.x) && (point.x < (aabb.x + aabb.width)) &&
+        (point.y >= aabb.y) && (point.y < (aabb.y + aabb.height));
+}
+
+bool check_collision_aabb_circle(aabb_t aabb, circle_t circle) {
+    float aabb_center_x = aabb.x + aabb.width/2.0f;
+    float aabb_center_y = aabb.y + aabb.height/2.0f;
+
+    float dx = fabsf(circle.center.x - aabb_center_x);
+    float dy = fabsf(circle.center.y - aabb_center_y);
+
+    if (dx > (aabb.width/2.0f + circle.radius)) {
+        return false;
+    }
+
+    if (dy > (aabb.height/2.0f + circle.radius)) {
+        return false;
+    }
+
+    if (dx <= (aabb.width/2.0f + circle.radius)) {
+        return true;
+    }
+
+    if (dy <= (aabb.height/2.0f + circle.radius)) {
+        return true;
+    }
+
+    float corner_distance_squared = (dx - aabb.width/2.0f)*(dx - aabb.width/2.0f) +
+                                    (dy - aabb.height/2.0f)*(dy - aabb.height/2.0f);
+
+    return (corner_distance_squared <= (circle.radius*circle.radius));
+}
+
+bool check_collision_circle_circle(circle_t a, circle_t b) {
+    float dx = b.center.x - a.center.x;
+    float dy = b.center.y - a.center.y;
+
+    float distance_squared = dx*dx + dy*dy;
+    float radius_sum = a.radius + b.radius;
+
+    return (distance_squared <= (radius_sum*radius_sum));
+}
+
+bool check_collision_circle_point(circle_t circle, vec2f_t point) {
+    float distance_squared = (point.x - circle.center.x)*(point.x - circle.center.x) +
+        (point.y - circle.center.y)*(point.y - circle.center.y);
+
+    return (distance_squared <= (circle.radius*circle.radius));
 }

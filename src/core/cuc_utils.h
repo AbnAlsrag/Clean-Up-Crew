@@ -62,6 +62,13 @@ typedef struct rectf_t {
     float width, height;
 } rectf_t;
 
+typedef rectf_t aabb_t;
+
+typedef struct circle_t {
+    vec2f_t center;
+    float radius;
+} circle_t;
+
 typedef struct color_t {
     uint8_t r;
     uint8_t g;
@@ -73,6 +80,8 @@ float deg_to_radf(float angle);
 float rad_to_degf(float angle);
 float clampf(float value, float min, float max);
 float lerpf(float a, float b, float t);
+float inv_lerpf(float a, float b, float v);
+float remapf(float imin, float imax, float omin, float omax, float v);
 
 vec2f_t vec2f_add(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_add_value(vec2f_t a, float b);
@@ -82,6 +91,7 @@ vec2f_t vec2f_mult(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_mult_value(vec2f_t a, float b);
 vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_div_value(vec2f_t a, float b);
+float vec2f_dot_product(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_invert(vec2f_t vec);
 vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max);
 vec2f_t vec2f_clamp_value(vec2f_t vec, float min, float max);
@@ -94,13 +104,30 @@ vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect);
 vec2f_t vec2f_move(vec2f_t vec, float angle, float distance);
 vec2f_t vec2f_move_towards(vec2f_t start, vec2f_t target, float distance);
 vec2f_t vec2f_normalize(vec2f_t vec);
-vec2f_t vec2f_lerp(vec2f_t a, vec2f_t b, float t);
+vec2f_t vec2f_lerp(vec2f_t a, vec2f_t b, float v);
+float vec2f_inv_lerp(vec2f_t a, vec2f_t b, vec2f_t value);
 vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t);
 vec2f_t vec2f_cartesian2polar(vec2f_t vec);
+vec2f_t vec2f_polar2cartesian(vec2f_t vec);
 
 color_t color_from_u32(uint32_t value);
 uint32_t color_to_u32(color_t color);
 color_t color_lerpf(color_t a, color_t b, float t);
 
+bool check_collision_aabb_aabb(aabb_t a, aabb_t b);
+bool check_collision_aabb_point(aabb_t aabb, vec2f_t point);
+bool check_collision_aabb_circle(aabb_t aabb, circle_t circle);
+bool check_collision_circle_circle(circle_t a, circle_t b);
+bool check_collision_circle_point(circle_t circle, vec2f_t point);
+
+/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Physics //////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+typedef struct physics_object_t {
+    vec2f_t pos;
+    vec2f_t acceleration;
+    vec2f_t velocity;
+} physics_object_t;
 
 #endif // _CUC_UTILS_H_
