@@ -7,11 +7,28 @@
 
 #define PLAYER_CLUE 0
 
+#define PLAYER0_BULLETS_LAYER 2
+#define PLAYER1_BULLETS_LAYER 3
+#define BULLET_COUNT MAX_DRAW_CALLS
+
+typedef struct bullet_t {
+    physics_object_t obj;
+    bool active;
+} bullet_t;
+
 texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
 float player_size = 100.0f;
 
 physics_object_t player0 = { .pos = { 100, 400 }, .mass = 1.0f };
+bullet_t player0_bullets[BULLET_COUNT] = {0};
+
 physics_object_t player1 = { .pos = { 200, 500 }, .mass = 1.0f };
+bullet_t player1_bullets[BULLET_COUNT] = {0};
+
+void manger() {
+    float dt = cuc_engine_get_tick_delta();
+    
+}
 
 void player0_handler(entity_index_t index) {
     entity_t *entity = cuc_engine_get_entity(index);
@@ -120,8 +137,8 @@ int main(void) {
 
     player_texture = cuc_engine_load_texture("resources/imgs/test.png", 0);
 
-    cuc_engine_set_entity_handler(1, player0_handler);
-    cuc_engine_set_entity_handler(3, player1_handler);
+    cuc_engine_set_entity_handler(1, manger);
+    // cuc_engine_set_entity_handler(3, player1_handler);
 
     entity_id_t player_id_0 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 1 });
     entity_id_t player_id_1 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 3 });

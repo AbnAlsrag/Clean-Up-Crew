@@ -76,6 +76,14 @@ typedef struct circle_sector_t {
     float end_angle;
 } circle_sector_t;
 
+typedef struct ring_t {
+    vec2f_t center;
+    float outer_radius;
+    float inner_radius;
+    float start_angle;
+    float end_angle;
+} ring_t;
+
 typedef struct color_t {
     uint8_t r;
     uint8_t g;

@@ -466,6 +466,10 @@ void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle
     DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 0, color_to_raylib_Color(color));
 }
 
+void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t color) {
+    DrawRing(vec2f_to_raylib_Vector2(center), inner_radius, outer_radius, start_angle, end_angle, 36, color_to_raylib_Color(color));
+}
+
 void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint) {
     Texture2D raylib_texture = texture_to_raylib_Texture2D(texture);
 

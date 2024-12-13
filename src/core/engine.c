@@ -497,6 +497,15 @@ bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circ
     return room_push_draw_call(room_index, draw_call);
 }
 
+bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color) {
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_RING,
+        .as = { .ring = { .ring = ring, .color = color } },
+    };
+
+    return room_push_draw_call(room_index, draw_call);
+}
+
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation) {
     texture_draw_call_t texture_draw_call = {
         .index = texture_index,

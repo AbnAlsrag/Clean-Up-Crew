@@ -96,6 +96,11 @@ typedef struct circle_sector_draw_call_t {
     color_t color;
 } circle_sector_draw_call_t;
 
+typedef struct ring_draw_call_t {
+    ring_t ring;
+    color_t color;
+} ring_draw_call_t;
+
 typedef struct texture_draw_call_t {
     texture_index_t index;
     rectf_t src;
@@ -104,16 +109,17 @@ typedef struct texture_draw_call_t {
     float rotation;
 } texture_draw_call_t;
 
-typedef uint8_t draw_call_kind_t;
-enum {
+typedef enum draw_call_kind_t {
     DRAW_CALL_KIND_RECT = 0,
     DRAW_CALL_CIRCLE_SECTOR,
+    DRAW_CALL_RING,
     DRAW_CALL_KIND_TEXTURE,
-};
+} draw_call_kind_t;
 
 typedef union draw_call_as_t {
     rect_draw_call_t rect;
     circle_sector_draw_call_t circle_sector;
+    ring_draw_call_t ring;
     texture_draw_call_t texture;
 } draw_call_as_t;
 
@@ -185,8 +191,8 @@ typedef struct cuc_engine_t {
 } cuc_engine_t;
 
 // int x = sizeof(cuc_engine_t); 
-// int x = sizeof(room_t);
-// int x = sizeof(draw_call_t);
+int x = sizeof(room_t);
+int x = sizeof(draw_call_t);
 
 void cuc_engine_init(void);
 void cuc_engine_deinit(void);
@@ -229,6 +235,7 @@ bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer);
 bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin, float rotation, color_t color);
 bool cuc_engine_draw_circle(room_index_t room_index, circle_t circle, color_t color);
 bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circle_sector, color_t color);
+bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color);
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation);
 
 #endif // _CUC_ENGINE_H_

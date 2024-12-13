@@ -301,6 +301,7 @@ void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, colo
 void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t color);
 void platform_draw_circle(vec2f_t center, float radius, color_t color);
 void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t color);
+void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t color);
 void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint);
 void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint);
 
