@@ -477,6 +477,26 @@ bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin,
     return room_push_draw_call(room_index, draw_call);
 }
 
+bool cuc_engine_draw_circle(room_index_t room_index, circle_t circle, color_t color) {
+    circle_sector_t circle_sector = { .center = circle.center, .radius = circle.radius, .start_angle = 0.0f, .end_angle = 360.0f };
+    
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_CIRCLE_SECTOR,
+        .as = { .circle_sector = { .circle_sector = circle_sector, .color = color } },
+    };
+
+    return room_push_draw_call(room_index, draw_call);
+}
+
+bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circle_sector, color_t color) {
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_CIRCLE_SECTOR,
+        .as = { .circle_sector = { .circle_sector = circle_sector, .color = color } },
+    };
+
+    return room_push_draw_call(room_index, draw_call);
+}
+
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation) {
     texture_draw_call_t texture_draw_call = {
         .index = texture_index,
@@ -733,6 +753,14 @@ void draw_draw_call(draw_call_t draw_call) {
             rect_draw_call.rect, rect_draw_call.origin,
             rect_draw_call.rotation, rect_draw_call.color);
     }break;
+    case DRAW_CALL_CIRCLE_SECTOR: {
+        circle_sector_draw_call_t circle_sector_draw_call = draw_call.as.circle_sector;
+
+        platform_draw_circle_sector(
+            circle_sector_draw_call.circle_sector.center, circle_sector_draw_call.circle_sector.radius,
+            circle_sector_draw_call.circle_sector.start_angle, circle_sector_draw_call.circle_sector.end_angle,
+            circle_sector_draw_call.color);
+    } break;
     case DRAW_CALL_KIND_TEXTURE: {
         texture_draw_call_t texture_draw_call = draw_call.as.texture;
 

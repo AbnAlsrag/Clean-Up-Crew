@@ -227,6 +227,7 @@ void platform_deinit(void);
 bool platform_running(void);
 bool platform_was_window_resized(void);
 vec2f_t platform_get_window_size(void);
+void *platform_get_native_window_handle(void);
 
 // TODO: maybe add keyboard specific input like in gamepads idk
 

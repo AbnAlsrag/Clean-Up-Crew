@@ -137,7 +137,7 @@ float vec2f_dot_product(vec2f_t a, vec2f_t b) {
     return (a.x*b.x + a.y*b.y);
 }
 
-vec2f_t vec2f_invert(vec2f_t vec) {
+vec2f_t vec2f_opposite(vec2f_t vec) {
     return (vec2f_t) { -vec.x, -vec.y };
 }
 
@@ -276,4 +276,93 @@ bool check_collision_circle_point(circle_t circle, vec2f_t point) {
         (point.y - circle.center.y)*(point.y - circle.center.y);
 
     return (distance_squared <= (circle.radius*circle.radius));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Physics //////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+void physics_apply_force(physics_object_t *obj, vec2f_t force) {
+    if (obj == NULL) {
+        return;
+    }
+
+    if (force.x != 0.0) {
+        obj->acceleration.x += force.x / obj->mass;
+    }
+
+    if (force.y != 0.0) {
+        obj->acceleration.y += force.y / obj->mass;
+    }
+}
+
+void physics_update_obj(physics_object_t *obj, float dt) {
+    if (obj == NULL) {
+        return;
+    }
+    
+    // Update velocity: v = v0 + a * dt
+    obj->velocity.x += obj->acceleration.x * dt;
+    obj->velocity.y += obj->acceleration.y * dt;
+
+    // Update position: p = p0 + v * dt
+    obj->pos.x += obj->velocity.x * dt;
+    obj->pos.y += obj->velocity.y * dt;
+
+    // Reset acceleration for the next frame
+    obj->acceleration = VECTOR2_ZERO;
+}
+
+void physics_set_obj_velocity(physics_object_t *obj, vec2f_t velocity) {
+    if (obj == NULL) {
+        return;
+    }
+
+    obj->velocity = velocity;
+}
+
+void physics_clear_obj_forces(physics_object_t *obj) {
+    if (obj == NULL) {
+        return;
+    }
+
+    obj->acceleration = VECTOR2_ZERO;
+}
+
+void physics_kinetic_energy(physics_object_t *obj);
+
+void physics_resolve_circle_collision(physics_object_t *a, physics_object_t *b, float restitution) {
+    if (a == NULL) {
+        return;
+    }
+
+    if (b == NULL) {
+        return;
+    }
+    
+    vec2f_t normal = { b->pos.x - a->pos.x, b->pos.y - a->pos.y };
+    float distance = sqrtf(normal.x * normal.x + normal.y * normal.y);
+
+    // Normalize the collision normal
+    if (distance == 0.0f) return;
+    normal.x /= distance;
+    normal.y /= distance;
+
+    // Relative velocity along the normal
+    vec2f_t relative_velocity = { b->velocity.x - a->velocity.x, b->velocity.y - a->velocity.y };
+    float velocity_along_normal = relative_velocity.x * normal.x + relative_velocity.y * normal.y;
+
+    // Ignore if moving apart
+    if (velocity_along_normal > 0.0f) return;
+
+    // Compute impulse scalar
+    // float total_mass = a->mass + b->mass;
+    float j = -(1 + restitution) * velocity_along_normal / (1 / a->mass + 1 / b->mass);
+
+    // Apply impulse
+    vec2f_t impulse = { j * normal.x, j * normal.y };
+    a->velocity.x -= impulse.x / a->mass;
+    a->velocity.y -= impulse.y / a->mass;
+    b->velocity.x += impulse.x / b->mass;
+    b->velocity.y += impulse.y / b->mass;
 }

@@ -69,6 +69,13 @@ typedef struct circle_t {
     float radius;
 } circle_t;
 
+typedef struct circle_sector_t {
+    vec2f_t center;
+    float radius;
+    float start_angle;
+    float end_angle;
+} circle_sector_t;
+
 typedef struct color_t {
     uint8_t r;
     uint8_t g;
@@ -92,7 +99,7 @@ vec2f_t vec2f_mult_value(vec2f_t a, float b);
 vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_div_value(vec2f_t a, float b);
 float vec2f_dot_product(vec2f_t a, vec2f_t b);
-vec2f_t vec2f_invert(vec2f_t vec);
+vec2f_t vec2f_opposite(vec2f_t vec);
 vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max);
 vec2f_t vec2f_clamp_value(vec2f_t vec, float min, float max);
 bool vec2f_equal(vec2f_t a, vec2f_t b);
@@ -128,6 +135,14 @@ typedef struct physics_object_t {
     vec2f_t pos;
     vec2f_t acceleration;
     vec2f_t velocity;
+    float mass;
 } physics_object_t;
+
+void physics_apply_force(physics_object_t *obj, vec2f_t force);
+void physics_update_obj(physics_object_t *obj, float dt);
+void physics_set_obj_velocity(physics_object_t *obj, vec2f_t velocity);
+void physics_clear_obj_forces(physics_object_t *obj);
+void physics_kinetic_energy(physics_object_t *obj);
+void physics_resolve_circle_collision(physics_object_t *a, physics_object_t *b, float restitution);
 
 #endif // _CUC_UTILS_H_

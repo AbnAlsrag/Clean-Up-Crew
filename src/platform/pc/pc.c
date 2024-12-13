@@ -87,6 +87,10 @@ vec2f_t platform_get_window_size(void) {
     return (vec2f_t) { GetScreenWidth(), GetScreenHeight() };
 }
 
+void *platform_get_native_window_handle(void) {
+    return GetWindowHandle();
+}
+
 bool platform_is_key_pressed(platform_keycode_t keycode) {
     return IsKeyPressed(get_raylib_keyboard_key(keycode));
 }
@@ -458,7 +462,8 @@ void platform_draw_circle(vec2f_t center, float radius, color_t color) {
 }
 
 void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t color) {
-    DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 36, color_to_raylib_Color(color));
+    // DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 36, color_to_raylib_Color(color));
+    DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 0, color_to_raylib_Color(color));
 }
 
 void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint) {
