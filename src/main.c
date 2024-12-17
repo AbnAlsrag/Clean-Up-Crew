@@ -7,6 +7,7 @@
 
 #define PLAYER_CLUE 0
 
+#define PLAYERS_LAYER 0
 #define PLAYER0_BULLETS_LAYER 2
 #define PLAYER1_BULLETS_LAYER 3
 #define BULLET_COUNT MAX_DRAW_CALLS
@@ -19,117 +20,107 @@ typedef struct bullet_t {
 texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
 float player_size = 100.0f;
 
-physics_object_t player0 = { .pos = { 100, 400 }, .mass = 1.0f };
+physics_object_t player0 = { .pos = { 200, 300 }, .mass = 1.0f };
+float player0_angle = 0.0f;
 bullet_t player0_bullets[BULLET_COUNT] = {0};
 
 physics_object_t player1 = { .pos = { 200, 500 }, .mass = 1.0f };
+float player1_angle = 0.0f;
 bullet_t player1_bullets[BULLET_COUNT] = {0};
 
-void manger() {
+void manger(entity_index_t manger_entity_index) {
     float dt = cuc_engine_get_tick_delta();
+
+    if (platform_is_gamepad_button_down(0, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+        dt = dt/2;
+    }
     
-}
-
-void player0_handler(entity_index_t index) {
-    entity_t *entity = cuc_engine_get_entity(index);
-
-    float dt = cuc_engine_get_tick_delta();
-
-    // // printf("%p\n", (void*)player0_pos);
-
     float window_offset = 100;
     rectf_t window_rect = {
             -window_offset, -window_offset,
             platform_get_window_size().x+window_offset*2, platform_get_window_size().y+window_offset*2 };
 
-    float player_speed = 500.0f;
-    float friction_value = 0.0f;
+    float player_acceleration = 500.0f;
+    float player_deceleration = 100.0f;
     float player_radius = player_size/2;
-    // rectf_t player0_rect = (rectf_t) { player0.pos.x, player0.pos.y, player_size, player_size };
+
+    rectf_t player0_rect = (rectf_t) { player0.pos.x, player0.pos.y, player_size, player_size };
+    rectf_t player1_rect = (rectf_t) { player1.pos.x, player1.pos.y, player_size, player_size };
+    vec2f_t player_center = (vec2f_t) { player_size/2.0f, player_size/2.0f };
+
     circle_t player0_circle = (circle_t) { .center = { player0.pos.x, player0.pos.y }, player_radius };
     circle_t player1_circle = (circle_t) { .center = { player1.pos.x, player1.pos.y }, player_radius };
 
-    color_t player0_color = COLOR_BLACK;
-
     if (check_collision_circle_circle(player0_circle, player1_circle)) {
-        player0_color = COLOR_RED;
-        physics_resolve_circle_collision(&player0, &player1, 0.5f);
-        // resolve_circle_collision(player0_pos, &player0_velocity, player_radius, 1,
-        // player1_pos, &player1_velocity, player_radius, 1);
-    } else {
-        player0_color = COLOR_BLUE;
+        physics_resolve_circle_collision(&player0, &player1, 1.0f);
     }
 
-    vec2f_t move_axis = VECTOR2_ZERO;
+    vec2f_t player0_move_axis = (vec2f_t) { platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_X), platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_Y) };
+    vec2f_t player1_move_axis = (vec2f_t) { platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_X), platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_Y) };
 
-    if (platform_is_key_down(PLATFORM_KEYCODE_W)) {
-        move_axis.y = -1;
-    } else if (platform_is_key_down(PLATFORM_KEYCODE_S)) {
-        move_axis.y = 1;
-    } else {
-        move_axis.y = 0;
+    if (fabsf(player0_move_axis.x) < 0.8f) {
+        player0_move_axis.x = 0.0f;
     }
 
-    if (platform_is_key_down(PLATFORM_KEYCODE_A)) {
-        move_axis.x = -1;
-    } else if (platform_is_key_down(PLATFORM_KEYCODE_D)) {
-        move_axis.x = 1;
-    } else {
-        move_axis.x = 0;
+    if (fabsf(player0_move_axis.y) < 0.8f) {
+        player0_move_axis.y = 0.0f;
     }
 
-    move_axis = vec2f_normalize(move_axis);
+    if (fabsf(player1_move_axis.x) < 0.8f) {
+        player1_move_axis.x = 0.0f;
+    }
 
-    vec2f_t force = vec2f_mult_value(move_axis, player_speed);
+    if (fabsf(player1_move_axis.y) < 0.8f) {
+        player1_move_axis.y = 0.0f;
+    }
 
-    physics_apply_force(&player0, force);
+    player0_move_axis = vec2f_normalize(player0_move_axis);
+    player1_move_axis = vec2f_normalize(player1_move_axis);
 
-    vec2f_t friction_direction = vec2f_opposite(vec2f_normalize(player0.velocity));
+    if (vec2f_length(player0_move_axis) != 0.0f) {
+        player0_angle = lerp_angle(player0_angle, vec2f_angle(player0_move_axis), 0.1f);
+    }
 
-    // vec2f_t move_direction = vec2f_normalize(player0.velocity);
-    // printf("move = "VECTOR2_FMT", ""friction = "VECTOR2_FMT"\n", VECTOR2_ARG(move_direction), VECTOR2_ARG(friction_direction));
+    if (vec2f_length(player1_move_axis) != 0.0f) {
+        player1_angle = lerp_angle(player1_angle, vec2f_angle(player1_move_axis), 0.1f);
+    }
 
-    vec2f_t friction_force = vec2f_mult_value(friction_direction, friction_value);
+    if (vec2f_length(player0_move_axis) == 0.0f) {
+        vec2f_t player0_deceleration_direction = vec2f_normalize(vec2f_opposite(player0.velocity));
+        vec2f_t player0_deceleration_force = vec2f_mult_value(player0_deceleration_direction, player_deceleration);
+        physics_apply_force(&player0, player0_deceleration_force);
 
-    // friction_force = VECTOR2_ZERO;
+        if (vec2f_length(player0.velocity) < 0.1f) {
+            player0.velocity = VECTOR2_ZERO;
+        }
+    }
 
-    physics_apply_force(&player0, friction_force);
+    if (vec2f_length(player1_move_axis) == 0.0f) {
+        vec2f_t player1_deceleration_direction = vec2f_normalize(vec2f_opposite(player1.velocity));
+        vec2f_t player1_deceleration_force = vec2f_mult_value(player1_deceleration_direction, player_deceleration);
+        physics_apply_force(&player1, player1_deceleration_force);
+
+        if (vec2f_length(player1.velocity) < 0.1f) {
+            player1.velocity = VECTOR2_ZERO;
+        }
+    }
+
+    vec2f_t player0_move_force = vec2f_mult_value(player0_move_axis, player_acceleration);
+    vec2f_t player1_move_force = vec2f_mult_value(player1_move_axis, player_acceleration);
+
+    physics_apply_force(&player0, player0_move_force);
+    physics_apply_force(&player1, player1_move_force);
 
     physics_update_obj(&player0, dt);
-
-    player0.pos = vec2f_wrap_rect(player0.pos, window_rect);
-
-    entity->pos = player0.pos;
-
-    // cuc_engine_draw_rect(
-    //     entity->room, player0_rect,
-    //     (vec2f_t) { player_size/2, player_size/2 }, 0.0f, player0_color);
-    cuc_engine_draw_circle(entity->room, (circle_t) { .center = player0.pos, .radius = player_radius }, player0_color);
-}
-
-void player1_handler(entity_index_t index) {
-    entity_t *entity = cuc_engine_get_entity(index);
-
-    float dt = cuc_engine_get_tick_delta();
-
-    float window_offset = 100;
-    rectf_t window_rect = {
-            -window_offset, -window_offset,
-            platform_get_window_size().x+window_offset*2, platform_get_window_size().y+window_offset*2 };;
-
     physics_update_obj(&player1, dt);
 
+    player0.pos = vec2f_wrap_rect(player0.pos, window_rect);
     player1.pos = vec2f_wrap_rect(player1.pos, window_rect);
 
-    entity->pos = player1.pos;
+    cuc_engine_set_current_draw_layer(PLAYERS_LAYER);
 
-    cuc_engine_draw_texture(
-        entity->room, player_texture,
-        cuc_engine_get_texture_src_rect(player_texture),
-        (rectf_t) { player1.pos.x, player1.pos.y, player_size, player_size },
-        (vec2f_t) { player_size/2.0f, player_size/2.0f },
-        0.0f
-    );
+    cuc_engine_draw_rect(0, player0_rect, player_center, player0_angle, COLOR_BLUE);
+    cuc_engine_draw_rect(0, player1_rect, player_center, player1_angle, COLOR_RED);
 }
 
 int main(void) {
@@ -140,17 +131,13 @@ int main(void) {
     cuc_engine_set_entity_handler(1, manger);
     // cuc_engine_set_entity_handler(3, player1_handler);
 
-    entity_id_t player_id_0 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 1 });
-    entity_id_t player_id_1 = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 3 });
-    entity_id_t goose_id = cuc_engine_register_entity((entity_t) { .pos = (vec2f_t) { 100, 100 }, .room = 0, .handler_id = 2 });
+    entity_index_t manger_index = cuc_engine_register_entity((entity_t) { .pos = VECTOR2_ZERO, .room = 0, .handler_id = 1 });
 
-    cuc_engine_register_splitscreen((player_t) { .id = player_id_0 }, NULL);
- 
+    cuc_engine_register_splitscreen((player_t) { .index = manger_index }, NULL);
+
     room_t room_0 = {0};
-    room_0.entity_count = 3;
-    room_0.entities[0] = player_id_0;
-    room_0.entities[1] = goose_id;
-    room_0.entities[2] = player_id_1;
+    room_0.entity_count = 1;
+    room_0.entities[0] = manger_index;
     room_0.id = 0;
     room_0.pos = (room_pos_t) { .x = 0, .y = 0, .width = 500, .height = 500 };
 

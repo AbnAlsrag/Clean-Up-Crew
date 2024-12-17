@@ -108,7 +108,7 @@ void cuc_engine_update(void) {
     platform_begin_drawing();
     for (size_t i = 0; i < engine.splitscreen_count; i++) {
         splitscreen_t *splitscreen = &engine.splitscreens[i];
-        entity_t *player_entity = &engine.entities[splitscreen->player.id];
+        entity_t *player_entity = &engine.entities[splitscreen->player.index];
         // uint32_t width = splitscreen->viewport.width;
         // uint32_t height = splitscreen->viewport.height;
 
@@ -207,9 +207,9 @@ entity_handler_t cuc_engine_get_entity_handler(entity_handler_id_t handler_id) {
     return engine.entity_handlers[handler_id];
 }
 
-bool cuc_engine_is_entity_player(entity_index_t id, player_t **out_player) {
+bool cuc_engine_is_entity_player(entity_index_t index, player_t **out_player) {
     for (size_t i = 0; i < engine.splitscreen_count && i < MAX_SPLITSCREENS; i++) {
-        if (engine.splitscreens[i].player.id == id) {
+        if (engine.splitscreens[i].player.index == index) {
             if (out_player != NULL) {
                 *out_player = &engine.splitscreens[i].player;
             }
@@ -221,9 +221,9 @@ bool cuc_engine_is_entity_player(entity_index_t id, player_t **out_player) {
     return false;
 }
 
-bool cuc_engine_is_entity_splitscreen_player(entity_index_t id, splitscreen_t **out_splitscreen) {
+bool cuc_engine_is_entity_splitscreen_player(entity_index_t index, splitscreen_t **out_splitscreen) {
         for (size_t i = 0; i < engine.splitscreen_count && i < MAX_SPLITSCREENS; i++) {
-        if (engine.splitscreens[i].player.id == id) {
+        if (engine.splitscreens[i].player.index == index) {
             if (out_splitscreen != NULL) {
                 *out_splitscreen = &engine.splitscreens[i];
             }

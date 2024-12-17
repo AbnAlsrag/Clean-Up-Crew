@@ -47,6 +47,7 @@ int main(void) {
         
         rrr_canvas_fill(canvas, RRR_COLOR_RED);
         rrr_canvas_draw_rect(canvas, (rrr_rect_t) { x, y, 50, 50 }, RRR_COLOR_DARKBLUE);
+        // rrr_canvas_draw_circle(canvas, (rrr_circle_t) { .center = { x, y }, 50}, RRR_COLOR_DARKBLUE);
 
         BeginDrawing();
             UpdateTexture(texture, img_data);

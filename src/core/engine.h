@@ -49,7 +49,7 @@ typedef struct entity_t {
 } entity_t;
 
 typedef struct player_t {
-    entity_index_t id;
+    entity_index_t index;
     platform_camera_t camera;
 } player_t;
 
@@ -191,8 +191,8 @@ typedef struct cuc_engine_t {
 } cuc_engine_t;
 
 // int x = sizeof(cuc_engine_t); 
-int x = sizeof(room_t);
-int x = sizeof(draw_call_t);
+// int x = sizeof(room_t);
+// int x = sizeof(draw_call_t);
 
 void cuc_engine_init(void);
 void cuc_engine_deinit(void);

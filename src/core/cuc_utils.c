@@ -30,6 +30,15 @@ float inv_lerpf(float a, float b, float v) {
     return (v - a) / (b - a);
 }
 
+float lerp_angle(float start_angle, float target_angle, float t) {
+    float delta = fmodf(target_angle - start_angle + 180.0f, 360.0f) - 180.0f;
+    if (delta < -180.0f) {
+        delta += 360.0f;
+    }
+
+    return start_angle + delta * t;
+}
+
 float remapf(float imin, float imax, float omin, float omax, float v) {
     float t = inv_lerpf(imin, imax, v);
     return lerpf(omin, omax, t);

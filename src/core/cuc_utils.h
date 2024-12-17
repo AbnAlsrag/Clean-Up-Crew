@@ -96,6 +96,7 @@ float rad_to_degf(float angle);
 float clampf(float value, float min, float max);
 float lerpf(float a, float b, float t);
 float inv_lerpf(float a, float b, float v);
+float lerp_angle(float start_angle, float target_angle, float t);
 float remapf(float imin, float imax, float omin, float omax, float v);
 
 vec2f_t vec2f_add(vec2f_t a, vec2f_t b);
