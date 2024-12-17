@@ -495,6 +495,10 @@ uint32_t platform_get_fps(void) {
     return GetFPS();
 }
 
+void platform_wait(double secs) {
+    WaitTime(secs);
+}
+
 void platform_open_url(char *url) {
     OpenURL(url);
 }

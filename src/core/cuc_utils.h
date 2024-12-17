@@ -117,6 +117,7 @@ float vec2f_distance(vec2f_t a, vec2f_t b);
 float vec2f_direction(vec2f_t a, vec2f_t b);
 float vec2f_angle(vec2f_t vec);
 vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect);
+bool vec2f_out_of_rect(vec2f_t vec, rectf_t rect);
 vec2f_t vec2f_move(vec2f_t vec, float angle, float distance);
 vec2f_t vec2f_move_towards(vec2f_t start, vec2f_t target, float distance);
 vec2f_t vec2f_normalize(vec2f_t vec);

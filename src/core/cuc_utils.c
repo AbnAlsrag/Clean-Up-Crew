@@ -120,6 +120,10 @@ vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect) {
     return result;
 }
 
+bool vec2f_out_of_rect(vec2f_t vec, rectf_t rect) {
+    return !check_collision_aabb_point((aabb_t) { .x = rect.x, .y = rect.y, .width = rect.width, .height = rect.height }, vec);
+}
+
 vec2f_t vec2f_move(vec2f_t vec, float angle, float distance) {
     vec2f_t result = VECTOR2_ZERO;
     result.x = vec.x + cosf(deg_to_radf(angle)) * distance;
@@ -197,11 +201,11 @@ vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t) {
 }
 
 vec2f_t vec2f_cartesian2polar(vec2f_t vec) {
-    return (vec2f_t) { hypotf(vec.x, vec.y), atan2f(vec.y, vec.x) };
+    return (vec2f_t) { hypotf(vec.x, vec.y), rad_to_degf(atan2f(vec.y, vec.x)) };
 }
 
 vec2f_t vec2f_polar2cartesian(vec2f_t vec) {
-    return (vec2f_t) { vec.x * cosf(vec.y), vec.x * sinf(vec.y) };
+    return (vec2f_t) { vec.x * cosf(deg_to_radf(vec.y)), vec.x * sinf(deg_to_radf(vec.y)) };
 }
 
 color_t color_from_u32(uint32_t value) {

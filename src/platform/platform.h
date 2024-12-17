@@ -308,6 +308,7 @@ void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t so
 float platform_get_delta_time(void);
 double platform_get_time(void);
 uint32_t platform_get_fps(void);
+void platform_wait(double secs);
 
 void platform_open_url(char *url);
 

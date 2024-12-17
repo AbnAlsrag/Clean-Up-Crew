@@ -16,11 +16,17 @@ Image to_image(rrr_color_t *pixels, rrr_u32_t width, rrr_u32_t height) {
     return img;
 }
 
+rrr_color_t pixel_shader(void) {
+    return RRR_COLOR_RAYWHITE;
+}
+
 int main(void) {
     SetTraceLogLevel(LOG_NONE);
     InitWindow(500, 500, "test");
 
     SetTargetFPS(60);
+
+    rrr_shader_program_t program = { .pixel_shader = pixel_shader };
 
     rrr_context_t context = rrr_create_context();
     rrr_make_context_current(context);
@@ -46,12 +52,15 @@ int main(void) {
         }
         
         rrr_canvas_fill(canvas, RRR_COLOR_RED);
+        rrr_set_shader_program(program);
         rrr_canvas_draw_rect(canvas, (rrr_rect_t) { x, y, 50, 50 }, RRR_COLOR_DARKBLUE);
-        // rrr_canvas_draw_circle(canvas, (rrr_circle_t) { .center = { x, y }, 50}, RRR_COLOR_DARKBLUE);
+        rrr_disable_shader_program();
+        // rrr_canvas_draw_circle(canvas, (rrr_circle_t) { .center = { x, y }, 100}, RRR_COLOR_DARKBLUE);
 
         BeginDrawing();
             UpdateTexture(texture, img_data);
             DrawTexture(texture, 0, 0, WHITE);
+            DrawFPS(0, 0);
         EndDrawing();
     }
 

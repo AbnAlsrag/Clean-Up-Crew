@@ -1,4 +1,4 @@
-// ˈrərə
+// ɹɪɹəɹəɹˈə
 
 #ifndef _RRR_H_
 #define _RRR_H_
@@ -70,6 +70,11 @@ typedef struct rrr_painter_t {
     rrr_painter_run_proc_t run_proc;
 } rrr_painter_t;
 
+typedef struct rrr_paint_group_t {
+    rrr_painter_t *painters;
+    rrr_usize_t painter_count;
+} rrr_paint_group_t;
+
 typedef struct rrr_color_t {
     rrr_u8_t r;
     rrr_u8_t g;
@@ -84,7 +89,8 @@ typedef struct rrr_shader_program_t {
 } rrr_shader_program_t;
 
 typedef struct rrr_context_t {
-    rrr_bool_t unused;
+    rrr_paint_group_t group;
+    rrr_shader_program_t program;
 } rrr_context_t;
 
 typedef struct rrr_image_t {
@@ -98,10 +104,10 @@ typedef struct rrr_canvas_t {
     rrr_image_t image;
 } rrr_canvas_t;
 
-typedef struct rrr_vec2f_t {
-    rrr_f32_t x;
-    rrr_f32_t y;
-} rrr_vec2f_t;
+typedef struct rrr_vec2i_t {
+    rrr_i32_t x;
+    rrr_i32_t y;
+} rrr_vec2i_t;
 
 typedef struct rrr_rect_t {
     rrr_i32_t x;
@@ -111,16 +117,17 @@ typedef struct rrr_rect_t {
 } rrr_rect_t;
 
 typedef struct rrr_circle_t {
-    rrr_vec2f_t center;
+    rrr_vec2i_t center;
     rrr_u32_t radius;
 } rrr_circle_t;
 
 #define RRR_IMAGE_PIXEL(_MACRO_INPUT_IMAGE_, _MACRO_INPUT_X_, _MACRO_INPUT_Y_) (_MACRO_INPUT_IMAGE_).pixels[(_MACRO_INPUT_Y_)*(_MACRO_INPUT_IMAGE_).stride + _MACRO_INPUT_X_]
 
-RRR_API rrr_f32_t rrr_vec2f_distance(rrr_vec2f_t a, rrr_vec2f_t b);
-
 RRR_API rrr_context_t rrr_create_context(void);
 RRR_API void rrr_make_context_current(rrr_context_t context);
+RRR_API void rrr_set_paint_group(rrr_paint_group_t paint_group);
+RRR_API void rrr_set_shader_program(rrr_shader_program_t program);
+RRR_API void rrr_disable_shader_program(void);
 RRR_API rrr_image_t rrr_create_image(rrr_color_t *pixels, rrr_u32_t width, rrr_u32_t height, rrr_u32_t stride);
 RRR_API rrr_bool_t rrr_is_image_valid(rrr_image_t image);
 RRR_API rrr_canvas_t rrr_create_canvas(rrr_color_t *pixels, rrr_u32_t width, rrr_u32_t height, rrr_u32_t stride);
@@ -135,12 +142,6 @@ RRR_API void rrr_canvas_draw_circle(rrr_canvas_t canvas, rrr_circle_t circle, rr
 
 static rrr_context_t _rrr_internal_current_context_ = {0};
 
-RRR_API rrr_f32_t rrr_vec2f_distance(rrr_vec2f_t a, rrr_vec2f_t b) {
-    float dx = b.x - a.x;
-    float dy = b.y - a.y;
-    return sqrtf(dx * dx + dy * dy);
-}
-
 RRR_API rrr_context_t rrr_create_context(void) {
     rrr_context_t context = {0};
 
@@ -149,6 +150,18 @@ RRR_API rrr_context_t rrr_create_context(void) {
 
 RRR_API void rrr_make_context_current(rrr_context_t context) {
     _rrr_internal_current_context_ = context;
+}
+
+RRR_API void rrr_set_paint_group(rrr_paint_group_t paint_group) {
+    _rrr_internal_current_context_.group = paint_group;
+}
+
+RRR_API void rrr_set_shader_program(rrr_shader_program_t program) {
+    _rrr_internal_current_context_.program = program;
+}
+
+RRR_API void rrr_disable_shader_program(void) {
+    _rrr_internal_current_context_.program = (rrr_shader_program_t){0};
 }
 
 RRR_API rrr_image_t rrr_create_image(rrr_color_t *pixels, rrr_u32_t width, rrr_u32_t height, rrr_u32_t stride) {
@@ -187,9 +200,15 @@ RRR_API rrr_rect_t rrr_canvas_get_normalized_rect(rrr_canvas_t canvas, rrr_rect_
 
     // Clamp x and adjust width
     if (result.x < 0) {
-        result.width += result.x;
+        if (-result.x >= result.width) {
+            result.width = 0;
+        } else {
+            result.width += result.x;
+        }
+
         result.x = 0;
     }
+
     if (result.x >= canvas.image.width) {
         result.x = canvas.image.width;
         result.width = 0;
@@ -197,9 +216,15 @@ RRR_API rrr_rect_t rrr_canvas_get_normalized_rect(rrr_canvas_t canvas, rrr_rect_
 
     // Clamp y and adjust height
     if (result.y < 0) {
-        result.height += result.y;
+        if (-result.y >= result.height) {
+            result.height = 0.0f;
+        } else {
+            result.height += result.y;
+        }
+
         result.y = 0;
     }
+
     if (result.y >= canvas.image.height) {
         result.y = canvas.image.height;
         result.height = 0;
@@ -225,33 +250,46 @@ RRR_API rrr_rect_t rrr_canvas_get_normalized_rect(rrr_canvas_t canvas, rrr_rect_
 }
 
 RRR_API void rrr_canvas_fill(rrr_canvas_t canvas, rrr_color_t color) {
+    rrr_color_t draw_color = color;
+    
     if (!rrr_is_image_valid(canvas.image)) {
         return;
     }
 
     for (rrr_usize_t y = 0; y < canvas.image.height; y++) {
         for (rrr_usize_t x = 0; x < canvas.image.width; x++) {
-            RRR_IMAGE_PIXEL(canvas.image, x, y) = color;
+            if (_rrr_internal_current_context_.program.pixel_shader != NULL) {
+                draw_color = _rrr_internal_current_context_.program.pixel_shader();
+            }
+            
+            RRR_IMAGE_PIXEL(canvas.image, x, y) = draw_color;
         }
     }
 }
 
 RRR_API void rrr_canvas_draw_rect(rrr_canvas_t canvas, rrr_rect_t rect, rrr_color_t color) {
+    rrr_color_t draw_color = color;
+    
     if (!rrr_is_image_valid(canvas.image)) {
         return;
     }
 
     rrr_rect_t draw_rect = rrr_canvas_get_normalized_rect(canvas, rect);
-    // rrr_rect_t draw_rect = rect;
 
     for (rrr_usize_t y = draw_rect.y; y < draw_rect.y+draw_rect.height; y++) {
         for (rrr_usize_t x = draw_rect.x; x < draw_rect.x+draw_rect.width; x++) {
-            RRR_IMAGE_PIXEL(canvas.image, x, y) = color;
+            if (_rrr_internal_current_context_.program.pixel_shader != NULL) {
+                draw_color = _rrr_internal_current_context_.program.pixel_shader();
+            }
+            
+            RRR_IMAGE_PIXEL(canvas.image, x, y) = draw_color;
         }
     }
 }
 
 RRR_API void rrr_canvas_draw_circle(rrr_canvas_t canvas, rrr_circle_t circle, rrr_color_t color) {
+    rrr_color_t draw_color = color;
+    
     if (!rrr_is_image_valid(canvas.image)) {
         return;
     }
@@ -266,7 +304,11 @@ RRR_API void rrr_canvas_draw_circle(rrr_canvas_t canvas, rrr_circle_t circle, rr
             rrr_f32_t distance_squared = dx * dx + dy * dy;
 
             if (distance_squared <= circle.radius * circle.radius) {
-                RRR_IMAGE_PIXEL(canvas.image, x, y) = color;
+                if (_rrr_internal_current_context_.program.pixel_shader != NULL) {
+                    draw_color = _rrr_internal_current_context_.program.pixel_shader();
+                }
+                
+                RRR_IMAGE_PIXEL(canvas.image, x, y) = draw_color;
             }
         }
     }

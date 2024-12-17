@@ -2,38 +2,87 @@
 #include "core/cuc_utils.h"
 #include "platform/platform.h"
 
+#include <stdlib.h>
+#include <memory.h>
 #include <stdio.h>
 #include <math.h>
 
 #define PLAYER_CLUE 0
 
 #define PLAYERS_LAYER 0
-#define PLAYER0_BULLETS_LAYER 2
-#define PLAYER1_BULLETS_LAYER 3
+#define PLAYER0_BULLETS_LAYER 1
+#define PLAYER1_BULLETS_LAYER 2
+#define PLAYER_LIVES_LAYER 3
 #define BULLET_COUNT MAX_DRAW_CALLS
+#define ILLEGAL_BULLET ((size_t)-1)
 
 typedef struct bullet_t {
     physics_object_t obj;
     bool active;
+    bool hit;
 } bullet_t;
 
 texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
 float player_size = 100.0f;
 
 physics_object_t player0 = { .pos = { 200, 300 }, .mass = 1.0f };
+int player0_health = 5;
+int player0_lives = 5;
 float player0_angle = 0.0f;
 bullet_t player0_bullets[BULLET_COUNT] = {0};
 
 physics_object_t player1 = { .pos = { 200, 500 }, .mass = 1.0f };
+int player1_health = 5;
+int player1_lives = 5;
 float player1_angle = 0.0f;
 bullet_t player1_bullets[BULLET_COUNT] = {0};
 
-void manger(entity_index_t manger_entity_index) {
+uint8_t winner = 0;
+
+size_t get_free_bullet(uint8_t player) {
+    bullet_t *bullet_array = NULL;
+
+    if (player == 0) {
+        bullet_array = player0_bullets;
+    } else if (player == 1) {
+        bullet_array = player1_bullets;
+    } else {
+        return ILLEGAL_BULLET;
+    }
+
+    for (size_t i = 0; i < BULLET_COUNT; i++) {
+        if (bullet_array[i].active == false) {
+            return i;
+        }
+    }
+
+    return ILLEGAL_BULLET;
+}
+
+void reset_state(void) {
+    player0 = (physics_object_t) { .pos = { 200, 300 }, .mass = 1.0f };
+    player1 = (physics_object_t) { .pos = { 200, 500 }, .mass = 1.0f };
+    player0_health = 5;
+    player1_health = 5;
+    player0_angle = 0.0f;
+    player1_angle = 0.0f;
+    memset(player0_bullets, 0, sizeof(bullet_t)*BULLET_COUNT);
+    memset(player1_bullets, 0, sizeof(bullet_t)*BULLET_COUNT);
+
+    for (size_t i = 0; i < BULLET_COUNT; i++) {
+        player0_bullets[i].obj.mass = 1.0f;
+        player1_bullets[i].obj.mass = 1.0f;
+    }
+
+    winner = 0;
+}
+
+void update_game(void) {
     float dt = cuc_engine_get_tick_delta();
 
-    if (platform_is_gamepad_button_down(0, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-        dt = dt/2;
-    }
+    // if (platform_is_gamepad_button_down(0, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+    //     dt = dt/2;
+    // }
     
     float window_offset = 100;
     rectf_t window_rect = {
@@ -42,14 +91,30 @@ void manger(entity_index_t manger_entity_index) {
 
     float player_acceleration = 500.0f;
     float player_deceleration = 100.0f;
+    float bullet_speed = 70000.0f;
     float player_radius = player_size/2;
 
-    rectf_t player0_rect = (rectf_t) { player0.pos.x, player0.pos.y, player_size, player_size };
-    rectf_t player1_rect = (rectf_t) { player1.pos.x, player1.pos.y, player_size, player_size };
+    vec2f_t player_barrel_offset = (vec2f_t) { -player_size/2, 5 };
     vec2f_t player_center = (vec2f_t) { player_size/2.0f, player_size/2.0f };
+
+    rectf_t player0_rect = (rectf_t) { player0.pos.x, player0.pos.y, player_size, player_size };
+    rectf_t player0_barrel = { player0.pos.x, player0.pos.y, 30, 10 };
+
+    rectf_t player1_rect = (rectf_t) { player1.pos.x, player1.pos.y, player_size, player_size };
+    rectf_t player1_barrel = { player1.pos.x, player1.pos.y, 30, 10 };
 
     circle_t player0_circle = (circle_t) { .center = { player0.pos.x, player0.pos.y }, player_radius };
     circle_t player1_circle = (circle_t) { .center = { player1.pos.x, player1.pos.y }, player_radius };
+
+    if (player0_health <= 0) {
+        winner = 2;
+        player0_lives -= 1;
+    }
+
+    if (player1_health <= 0) {
+        winner = 1;
+        player1_lives -= 1;
+    }
 
     if (check_collision_circle_circle(player0_circle, player1_circle)) {
         physics_resolve_circle_collision(&player0, &player1, 1.0f);
@@ -57,6 +122,10 @@ void manger(entity_index_t manger_entity_index) {
 
     vec2f_t player0_move_axis = (vec2f_t) { platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_X), platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_Y) };
     vec2f_t player1_move_axis = (vec2f_t) { platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_X), platform_get_gamepad_axis(1, PLATFORM_GAMEPAD_AXIS_LEFT_Y) };
+
+    // player0_move_axis.y = -player0_move_axis.y;
+    // player1_move_axis.y = -player1_move_axis.y;
+    // printf(VECTOR2_FMT"\n", VECTOR2_ARG(player0_move_axis));
 
     if (fabsf(player0_move_axis.x) < 0.8f) {
         player0_move_axis.x = 0.0f;
@@ -78,11 +147,41 @@ void manger(entity_index_t manger_entity_index) {
     player1_move_axis = vec2f_normalize(player1_move_axis);
 
     if (vec2f_length(player0_move_axis) != 0.0f) {
+        // player0_angle = vec2f_angle(player0_move_axis);
         player0_angle = lerp_angle(player0_angle, vec2f_angle(player0_move_axis), 0.1f);
     }
 
     if (vec2f_length(player1_move_axis) != 0.0f) {
         player1_angle = lerp_angle(player1_angle, vec2f_angle(player1_move_axis), 0.1f);
+    }
+
+    if (platform_is_gamepad_button_pressed(0, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_LEFT)) {
+        size_t bullet = get_free_bullet(0);
+        
+        if (bullet != ILLEGAL_BULLET) {
+            player0_bullets[bullet].active = true;
+            // player0_bullets[bullet].obj.pos = (vec2f_t){ player0_barrel.x+(player_size/2), 0 };
+            player0_bullets[bullet].obj.pos = player0.pos;
+            // player0_bullets[bullet].obj.velocity = player0.velocity;
+            player0_bullets[bullet].obj.velocity = VECTOR2_ZERO;
+            vec2f_t bullet_direction = vec2f_polar2cartesian((vec2f_t) { 1.0f, player0_angle });
+            vec2f_t bullet_force = vec2f_mult_value(bullet_direction, bullet_speed);
+            physics_apply_force(&player0_bullets[bullet].obj, bullet_force);
+        }
+    }
+
+    if (platform_is_gamepad_button_pressed(1, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_LEFT)) {
+        size_t bullet = get_free_bullet(1);
+        
+        if (bullet != ILLEGAL_BULLET) {
+            player1_bullets[bullet].active = true;
+            player1_bullets[bullet].obj.pos = player1.pos;
+            // player0_bullets[bullet].obj.velocity = player0.velocity;
+            player1_bullets[bullet].obj.velocity = VECTOR2_ZERO;
+            vec2f_t bullet_direction = vec2f_polar2cartesian((vec2f_t) { 1.0f, player1_angle });
+            vec2f_t bullet_force = vec2f_mult_value(bullet_direction, bullet_speed);
+            physics_apply_force(&player1_bullets[bullet].obj, bullet_force);
+        }
     }
 
     if (vec2f_length(player0_move_axis) == 0.0f) {
@@ -105,6 +204,63 @@ void manger(entity_index_t manger_entity_index) {
         }
     }
 
+    for (size_t i = 0; i < player0_lives; i++) {
+        cuc_engine_set_current_draw_layer(PLAYER_LIVES_LAYER);
+        rectf_t life_rect = (rectf_t) { (20+5)*i, 0, 20, 20 };
+        cuc_engine_draw_rect(0, life_rect, VECTOR2_ZERO, 0.0f, COLOR_BLUE);
+    }
+
+    for (size_t i = 0; i < player1_lives; i++) {
+        cuc_engine_set_current_draw_layer(PLAYER_LIVES_LAYER);
+        rectf_t life_rect = (rectf_t) { (20+5)*i, 0, 20, 20 };
+        life_rect.x += platform_get_window_size().x-((20+5)*5);
+        cuc_engine_draw_rect(0, life_rect, VECTOR2_ZERO, 0.0f, COLOR_RED);
+    }
+
+    for (size_t i = 0; i < BULLET_COUNT; i++) {
+        if (player0_bullets[i].active) {
+            physics_update_obj(&player0_bullets[i].obj, dt);
+
+            circle_t bullet_circle = { { player0_bullets[i].obj.pos.x, player0_bullets[i].obj.pos.y }, 10 };
+
+            if (vec2f_out_of_rect(player0_bullets[i].obj.pos, window_rect)) {
+                player0_bullets[i].active = false;
+            }
+
+            if (check_collision_aabb_circle(player1_rect, bullet_circle) && !player0_bullets[i].hit) {
+                player1_health -= 1;
+                player0_bullets[i].hit = true;
+                player0_bullets[i].active = false;
+            } else {
+                player0_bullets[i].hit = false;
+            }
+
+            cuc_engine_set_current_draw_layer(PLAYER0_BULLETS_LAYER);
+            cuc_engine_draw_circle(0, bullet_circle, COLOR_MAGENTA);
+        }
+
+        if (player1_bullets[i].active) {
+            physics_update_obj(&player1_bullets[i].obj, dt);
+
+            circle_t bullet_circle = { { player1_bullets[i].obj.pos.x, player1_bullets[i].obj.pos.y }, 10 };
+
+            if (vec2f_out_of_rect(player1_bullets[i].obj.pos, window_rect)) {
+                player1_bullets[i].active = false;
+            }
+
+            if (check_collision_aabb_circle(player0_rect, bullet_circle) && !player1_bullets[i].hit) {
+                player0_health -= 1;
+                player1_bullets[i].hit = true;
+                player1_bullets[i].active = false;
+            } else {
+                player1_bullets[i].hit = false;
+            }
+
+            cuc_engine_set_current_draw_layer(PLAYER0_BULLETS_LAYER);
+            cuc_engine_draw_circle(0, bullet_circle, COLOR_MAGENTA);
+        }
+    }
+
     vec2f_t player0_move_force = vec2f_mult_value(player0_move_axis, player_acceleration);
     vec2f_t player1_move_force = vec2f_mult_value(player1_move_axis, player_acceleration);
 
@@ -120,10 +276,32 @@ void manger(entity_index_t manger_entity_index) {
     cuc_engine_set_current_draw_layer(PLAYERS_LAYER);
 
     cuc_engine_draw_rect(0, player0_rect, player_center, player0_angle, COLOR_BLUE);
+    cuc_engine_draw_rect(0, player0_barrel, player_barrel_offset, player0_angle, COLOR_GREEN);
+
     cuc_engine_draw_rect(0, player1_rect, player_center, player1_angle, COLOR_RED);
+    cuc_engine_draw_rect(0, player1_barrel, player_barrel_offset, player1_angle, COLOR_GREEN);
+}
+
+void manger(entity_index_t manger_entity_index) {
+    if (winner == 0) {
+        update_game();
+    } else {
+        if (player0_lives <= 0) {
+            cuc_engine_set_clear_color(COLOR_RED);
+        } else if (player1_lives <= 0) {
+            cuc_engine_set_clear_color(COLOR_BLUE);
+        } else {
+            reset_state();
+        }
+    }
 }
 
 int main(void) {
+    for (size_t i = 0; i < BULLET_COUNT; i++) {
+        player0_bullets[i].obj.mass = 1.0f;
+        player1_bullets[i].obj.mass = 1.0f;
+    }
+
     cuc_engine_init();
 
     player_texture = cuc_engine_load_texture("resources/imgs/test.png", 0);
