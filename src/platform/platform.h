@@ -202,12 +202,12 @@ typedef struct platform_camera_t {
 } platform_camera_t;
 
 typedef enum platform_blend_mode_t {
-    BLEND_MODE_ALPHA = 0,
-    BLEND_MODE_ADDITIVE,
-    BLEND_MODE_MULTIPLIED,
-    BLEND_MODE_ADD_COLORS,
-    BLEND_MODE_SUBTRACT_COLORS,
-    BLEND_MODE_ALPHA_PREMULTIPLY,
+    PLATFORM_BLEND_MODE_ALPHA = 0,
+    PLATFORM_BLEND_MODE_ADDITIVE,
+    PLATFORM_BLEND_MODE_MULTIPLIED,
+    PLATFORM_BLEND_MODE_ADD_COLORS,
+    PLATFORM_BLEND_MODE_SUBTRACT_COLORS,
+    PLATFORM_BLEND_MODE_ALPHA_PREMULTIPLY,
 } platform_blend_mode_t;
 
 typedef struct platform_texture_t {
@@ -220,6 +220,24 @@ typedef struct platform_frame_buffer_t {
     uint32_t id;
     platform_texture_t texture;
 } platform_frame_buffer_t;
+
+typedef uint32_t platform_codepoint_t;
+
+typedef struct platform_glyph_info_t {
+    platform_codepoint_t codepoint;
+    uint32_t offset_x;
+    uint32_t offset_y;
+    uint32_t advance_x;
+    rectf_t rect;
+} platform_glyph_info_t;
+
+typedef struct platform_font_t {
+    uint32_t size;
+    uint32_t glyph_padding;
+    size_t glyph_count;
+    platform_glyph_info_t *glyphs;
+    platform_texture_t texture;
+} platform_font_t;
 
 void platform_init(platform_config_t config);
 void platform_reconfig(platform_config_t config);
@@ -295,15 +313,20 @@ void platform_unload_texture(platform_texture_t texture);
 platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t height);
 void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer);
 
+platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info);
+void platform_unload_font(platform_font_t font);
+
 void platform_draw_fps(vec2f_t pos);
-void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t color);
-void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t color);
-void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t color);
-void platform_draw_circle(vec2f_t center, float radius, color_t color);
-void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t color);
-void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t color);
+void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t tint);
+void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t tint);
+void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t tint);
+void platform_draw_circle(vec2f_t center, float radius, color_t tint);
+void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t tint);
+void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t tint);
 void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint);
 void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint);
+void platform_draw_text(platform_font_t font, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint);
+void platform_draw_codepoint(platform_font_t font, platform_codepoint_t codepoint, vec2f_t position, float font_size, color_t tint);
 
 float platform_get_delta_time(void);
 double platform_get_time(void);

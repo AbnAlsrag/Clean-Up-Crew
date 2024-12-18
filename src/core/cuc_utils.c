@@ -1,6 +1,15 @@
 #include "cuc_utils.h"
+#include "platform/platform.h"
 
 #include <math.h>
+
+bool is_timer_finished(timer_t timer) {
+    return platform_get_time() - timer.start_time >= timer.lifetime;
+}
+
+double get_elapsed_time(timer_t timer) {
+    return platform_get_time() - timer.start_time;
+}
 
 float deg_to_radf(float angle) {
     return (angle * PI / 180.0f);
@@ -96,6 +105,18 @@ float vec2f_direction(vec2f_t a, vec2f_t b) {
 float vec2f_angle(vec2f_t vec) {
     if (vec.x == 0.0f && vec.y == 0.0f) return 0.0f;
     return rad_to_degf(atan2f(vec.y, vec.x));
+}
+
+vec2f_t vec2f_set_angle(vec2f_t vec, float angle) {
+    vec2f_t polar = vec2f_cartesian2polar(vec);
+    polar.y = angle;
+    return vec2f_polar2cartesian(polar);
+}
+
+vec2f_t vec2f_rotate(vec2f_t vec, float angle) {
+    vec2f_t polar = vec2f_cartesian2polar(vec);
+    polar.y += angle;
+    return vec2f_polar2cartesian(polar);
 }
 
 vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect) {

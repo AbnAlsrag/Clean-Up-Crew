@@ -1,5 +1,6 @@
 #include "platform/platform.h"
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <raylib/raylib.h>
@@ -37,6 +38,8 @@ Texture2D texture_to_raylib_Texture2D(platform_texture_t texture);
 platform_sound_t raylib_Sound_to_sound(Sound sound);
 Sound sound_to_raylib_Sound(platform_sound_t sound);
 RenderTexture2D frame_buffer_to_raylibe_RenderTexture2D(platform_frame_buffer_t frame_buffer);
+size_t text_lenght(const char *text);
+platform_codepoint_t get_next_codepoint(const char *text, size_t *out_codepoint_size);
 
 #include <stdio.h>
 
@@ -441,33 +444,82 @@ void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer) {
     }
 }
 
+// TODO: add logging
+platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info) {
+    platform_font_t result = {0};
+
+    if (codepoints == NULL) {
+        return result;
+    }
+
+    if (glyph_info == NULL) {
+        return result;
+    }
+
+    if (codepoint_count == 0) {
+        return result;
+    }
+
+    Font font = LoadFontEx(file_path, font_size, (int*)((void*)codepoints), codepoint_count);
+
+    if (codepoint_count != font.glyphCount) {
+        return result;
+    }
+
+    for (size_t i = 0; i < codepoint_count; i++) {
+        GlyphInfo ray_glyph = font.glyphs[i];
+        Rectangle ray_glyph_rect = font.recs[i];
+        
+        glyph_info[i].codepoint = ray_glyph.value;
+        glyph_info[i].offset_x = ray_glyph.offsetX;
+        glyph_info[i].offset_y = ray_glyph.offsetY;
+        glyph_info[i].advance_x = ray_glyph.advanceX;
+        glyph_info[i].rect = raylib_Rectangle_to_rectf(ray_glyph_rect);
+    }
+
+    result.size = font_size;
+    result.glyph_padding = font.glyphPadding;
+    result.glyph_count = codepoint_count;
+    result.glyphs = glyph_info;
+    result.texture = raylib_Texture2D_to_texture(font.texture);
+
+    UnloadFontData(font.glyphs, font.glyphCount);
+    RL_FREE(font.recs);
+
+    return result;
+}
+
+void platform_unload_font(platform_font_t font) {
+    platform_unload_texture(font.texture);
+}
+
 void platform_draw_fps(vec2f_t pos) {
     DrawFPS(pos.x, pos.y);
 }
 
-void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t color) {
-    DrawLineEx(vec2f_to_raylib_Vector2(start), vec2f_to_raylib_Vector2(end), thickness, color_to_raylib_Color(color));
+void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t tint) {
+    DrawLineEx(vec2f_to_raylib_Vector2(start), vec2f_to_raylib_Vector2(end), thickness, color_to_raylib_Color(tint));
 }
 
-void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t color) {
-    DrawTriangle(vec2f_to_raylib_Vector2(point0), vec2f_to_raylib_Vector2(point1), vec2f_to_raylib_Vector2(point2), color_to_raylib_Color(color));
+void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t tint) {
+    DrawTriangle(vec2f_to_raylib_Vector2(point0), vec2f_to_raylib_Vector2(point1), vec2f_to_raylib_Vector2(point2), color_to_raylib_Color(tint));
 }
 
-void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t color) {
-    DrawRectanglePro(rectf_to_raylib_Rectangle(rect), vec2f_to_raylib_Vector2(origin), rotation, color_to_raylib_Color(color));
+void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t tint) {
+    DrawRectanglePro(rectf_to_raylib_Rectangle(rect), vec2f_to_raylib_Vector2(origin), rotation, color_to_raylib_Color(tint));
 }
 
-void platform_draw_circle(vec2f_t center, float radius, color_t color) {
-    DrawCircle(center.x, center.y, radius, color_to_raylib_Color(color));
+void platform_draw_circle(vec2f_t center, float radius, color_t tint) {
+    DrawCircle(center.x, center.y, radius, color_to_raylib_Color(tint));
 }
 
-void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t color) {
+void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t tint) {
     // DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 36, color_to_raylib_Color(color));
-    DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 0, color_to_raylib_Color(color));
+    DrawCircleSector(vec2f_to_raylib_Vector2(center), radius, start_angle, end_angle, 0, color_to_raylib_Color(tint));
 }
 
-void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t color) {
-    DrawRing(vec2f_to_raylib_Vector2(center), inner_radius, outer_radius, start_angle, end_angle, 36, color_to_raylib_Color(color));
+void platform_draw_ring(vec2f_t center, float outer_radius, float inner_radius, float start_angle, float end_angle, color_t tint) {
+    DrawRing(vec2f_to_raylib_Vector2(center), inner_radius, outer_radius, start_angle, end_angle, 36, color_to_raylib_Color(tint));
 }
 
 void platform_draw_texture(platform_texture_t texture, rectf_t source, rectf_t dest, vec2f_t origin, float rotation, color_t tint) {
@@ -482,6 +534,20 @@ void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t so
 
     DrawTexturePro(raylib_texture, rectf_to_raylib_Rectangle(source), rectf_to_raylib_Rectangle(dest), vec2f_to_raylib_Vector2(origin), rotation, color_to_raylib_Color(tint));
 }
+
+void platform_draw_text(platform_font_t font, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint) {
+    rlPushMatrix();
+
+        rlTranslatef(pos.x, pos.y, 0.0f);
+        rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
+        rlTranslatef(-origin.x, -origin.y, 0.0f);
+
+
+
+    rlPopMatrix();
+}
+
+void platform_draw_codepoint(platform_font_t font, platform_codepoint_t codepoint, vec2f_t position, float font_size, color_t tint);
 
 float platform_get_delta_time(void) {
     return GetFrameTime();
@@ -828,6 +894,7 @@ Camera2D camera_to_raylib_Camera2D(platform_camera_t camera) {
         .zoom = camera.zoom
     };
 }
+
 rectf_t raylib_Rectangle_to_rectf(Rectangle rect) {
     return (rectf_t) { rect.x, rect.y, rect.width, rect.height };
 }
@@ -901,4 +968,22 @@ RenderTexture2D frame_buffer_to_raylibe_RenderTexture2D(platform_frame_buffer_t 
     };
 
     return result;
+}
+
+size_t text_lenght(const char *text) {
+    size_t result = 0;
+    
+    if (text == NULL) {
+        return 0;
+    }
+
+    while (text[result] != 0) {
+        result += 1;
+    }
+
+    return result;
+}
+
+platform_codepoint_t get_next_codepoint(const char *text, size_t *out_codepoint_size) {
+    
 }

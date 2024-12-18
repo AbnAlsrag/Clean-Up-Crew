@@ -77,7 +77,7 @@ void reset_state(void) {
     winner = 0;
 }
 
-void update_game(void) {
+void update_game(void) {    
     float dt = cuc_engine_get_tick_delta();
 
     // if (platform_is_gamepad_button_down(0, PLATFORM_GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
@@ -160,8 +160,9 @@ void update_game(void) {
         
         if (bullet != ILLEGAL_BULLET) {
             player0_bullets[bullet].active = true;
-            // player0_bullets[bullet].obj.pos = (vec2f_t){ player0_barrel.x+(player_size/2), 0 };
-            player0_bullets[bullet].obj.pos = player0.pos;
+            vec2f_t bullet_pos = vec2f_add((vec2f_t) { player0_barrel.x, player0_barrel.y }, vec2f_set_angle((vec2f_t) { -player_barrel_offset.x, player_barrel_offset.y-5 }, player0_angle));
+            player0_bullets[bullet].obj.pos = bullet_pos;
+            // player0_bullets[bullet].obj.pos = player0.pos;
             // player0_bullets[bullet].obj.velocity = player0.velocity;
             player0_bullets[bullet].obj.velocity = VECTOR2_ZERO;
             vec2f_t bullet_direction = vec2f_polar2cartesian((vec2f_t) { 1.0f, player0_angle });

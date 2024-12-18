@@ -91,6 +91,14 @@ typedef struct color_t {
     uint8_t a;
 } color_t;
 
+typedef struct timer_t {
+    double start_time;
+    double lifetime;
+} timer_t;
+
+bool is_timer_finished(timer_t timer);
+double get_elapsed_time(timer_t timer);
+
 float deg_to_radf(float angle);
 float rad_to_degf(float angle);
 float clampf(float value, float min, float max);
@@ -116,6 +124,8 @@ float vec2f_length(vec2f_t vec);
 float vec2f_distance(vec2f_t a, vec2f_t b);
 float vec2f_direction(vec2f_t a, vec2f_t b);
 float vec2f_angle(vec2f_t vec);
+vec2f_t vec2f_set_angle(vec2f_t vec, float angle);
+vec2f_t vec2f_rotate(vec2f_t vec, float angle);
 vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect);
 bool vec2f_out_of_rect(vec2f_t vec, rectf_t rect);
 vec2f_t vec2f_move(vec2f_t vec, float angle, float distance);
