@@ -118,6 +118,8 @@ void cuc_engine_update(void) {
         platform_end_viewport();
     }
         // platform_draw_fps((vec2f_t) { 0, 0 });
+
+        // platform_draw_text(platform_get_default_font(), "hi\nhello world", (vec2f_t) { 10, 10 }, VECTOR2_ZERO, 0.0f, 56, 1.0f, COLOR_GREEN);
     platform_end_drawing();
 
     for (size_t i = 0; i < MAX_ROOMS; i++) {
