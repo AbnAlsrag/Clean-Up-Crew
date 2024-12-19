@@ -22,6 +22,8 @@ typedef struct bullet_t {
     bool hit;
 } bullet_t;
 
+font_index_t font = ILLEGAL_FONT_ID;
+
 texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
 float player_size = 100.0f;
 
@@ -288,9 +290,12 @@ void manger(entity_index_t manger_entity_index) {
         update_game();
     } else {
         if (player0_lives <= 0) {
-            cuc_engine_set_clear_color(COLOR_RED);
+            cuc_engine_set_clear_color(COLOR_WHITE);
+            cuc_engine_draw_text(0, font, "RED WON", VECTOR2_ZERO, VECTOR2_ZERO, 0.0f, 56, 2.0f, COLOR_RED);
         } else if (player1_lives <= 0) {
-            cuc_engine_set_clear_color(COLOR_BLUE);
+            cuc_engine_set_clear_color(COLOR_WHITE);
+            cuc_engine_draw_text(0, font, "BLUE WON", VECTOR2_ZERO, VECTOR2_ZERO, 0.0f, 56, 2.0f, COLOR_BLUE);
+            // cuc_engine_set_clear_color(COLOR_BLUE);
         } else {
             reset_state();
         }
@@ -304,6 +309,8 @@ int main(void) {
     }
 
     cuc_engine_init();
+
+    font = cuc_engine_load_font_from_platform_font(platform_get_default_font(), 0);
 
     player_texture = cuc_engine_load_texture("resources/imgs/test.png", 0);
 

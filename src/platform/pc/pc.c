@@ -484,24 +484,26 @@ platform_font_t platform_get_default_font(void) {
 }
 
 // TODO: add logging
-platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info) {
+platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count) {
     platform_font_t result = {0};
 
-    if (codepoints == NULL) {
-        return result;
-    }
-
-    if (glyph_info == NULL) {
-        return result;
-    }
-
     if (codepoint_count == 0) {
+        return result;
+    }
+
+    if (codepoints == NULL) {
         return result;
     }
 
     Font font = LoadFontEx(file_path, font_size, (int*)((void*)codepoints), codepoint_count);
 
     if (codepoint_count != font.glyphCount) {
+        return result;
+    }
+
+    platform_glyph_info_t *glyph_info = RL_MALLOC(sizeof(platform_glyph_info_t)*codepoint_count);
+
+    if (glyph_info == NULL) {
         return result;
     }
 
@@ -544,7 +546,17 @@ bool platform_is_font_valid(platform_font_t font) {
 }
 
 void platform_unload_font(platform_font_t font) {
-    platform_unload_texture(font.texture);
+    if (!platform_is_font_valid(font)) {
+        return;
+    }
+    
+    if (platform_is_texture_valid(font.texture)) {
+        platform_unload_texture(font.texture);
+    }
+
+    if (font.glyphs != NULL) {
+        RL_FREE(font.glyphs);
+    }
 }
 
 void platform_draw_fps(vec2f_t pos) {

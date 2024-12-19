@@ -305,6 +305,7 @@ void platform_begin_scissor_mode(rectf_t rect);
 void platform_end_scissor_mode(void);
 void platform_begin_wireframe_mode(void);
 void platform_end_wireframe_mode(void);
+
 vec2f_t platform_get_world_to_screen(platform_camera_t camera, vec2f_t pos);
 vec2f_t platform_get_screen_to_world(platform_camera_t camera, vec2f_t pos);
 
@@ -316,7 +317,7 @@ platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t heig
 void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer);
 
 platform_font_t platform_get_default_font(void);
-platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info);
+platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count);
 bool platform_is_font_valid(platform_font_t font);
 void platform_unload_font(platform_font_t font);
 

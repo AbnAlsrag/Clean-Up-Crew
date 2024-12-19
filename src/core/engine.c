@@ -14,6 +14,8 @@ bool is_room_slot_empty(room_index_t index);
 bool set_room_slot(room_index_t index, bool value);
 bool is_texture_slot_empty(texture_index_t index);
 bool set_texture_slot(texture_index_t index, bool value);
+bool is_font_slot_empty(font_index_t index);
+bool set_font_slot(font_index_t index, bool value);
 bool room_push_draw_call(room_index_t index, draw_call_t draw_call);
 void draw_room(room_index_t index);
 void draw_draw_call(draw_call_t draw_call);
@@ -118,8 +120,6 @@ void cuc_engine_update(void) {
         platform_end_viewport();
     }
         // platform_draw_fps((vec2f_t) { 0, 0 });
-
-        // platform_draw_text(platform_get_default_font(), "hi\nhello world", (vec2f_t) { 10, 10 }, VECTOR2_ZERO, 0.0f, 56, 1.0f, COLOR_GREEN);
     platform_end_drawing();
 
     for (size_t i = 0; i < MAX_ROOMS; i++) {
@@ -347,9 +347,14 @@ room_index_t cuc_engine_room_id_to_index(room_id_t room_id) {
     return ILLEGAL_ROOM_ID;
 }
 
+// TODO: check if `platform_load_texture` didn't fail and if failed return `ILLEGAL_TEXTURE_ID`
 texture_index_t cuc_engine_load_texture(const char *path, texture_id_t id) {
     texture_index_t idx = 0;
     bool found_sth = false;
+
+    if (id == ILLEGAL_TEXTURE_ID) {
+        return ILLEGAL_TEXTURE_ID;
+    }
 
     for (; idx < MAX_LOADED_TEXTURES && idx != ILLEGAL_TEXTURE_ID; idx++) {
         if (is_room_slot_empty(idx)) {
@@ -419,6 +424,90 @@ rectf_t cuc_engine_get_texture_src_rect(texture_index_t index) {
     return result;
 }
 
+font_index_t cuc_engine_load_font_from_ttf_file(const char *path, font_id_t id, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count) {
+    if (path == NULL) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    if (id == ILLEGAL_FONT_ID) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    if (font_size == 0) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    if (codepoints == NULL) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    if (codepoint_count == 0) {
+        return ILLEGAL_FONT_ID;
+    }
+    
+    platform_font_t platform_font = platform_load_font_from_ttf_file(path, font_size, codepoints, codepoint_count);
+
+    if (!platform_is_font_valid(platform_font)) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    return cuc_engine_load_font_from_platform_font(platform_font, id);
+}
+
+font_index_t cuc_engine_load_font_from_platform_font(platform_font_t platform_font, font_id_t id) {
+    font_index_t idx = 0;
+    bool found_sth = false;
+
+    if (id == ILLEGAL_FONT_ID) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    if (!platform_is_font_valid(platform_font)) {
+        return ILLEGAL_FONT_ID;
+    }
+
+    for (; idx < MAX_LOADED_FONTS && idx != ILLEGAL_FONT_ID; idx++) {
+        if (is_room_slot_empty(idx)) {
+            loaded_font_t font = {
+                .id = id,
+                .font = platform_font,
+            };
+
+            set_font_slot(idx, true);
+            engine.fonts[idx] = font;
+            found_sth = true;
+            break;
+        }
+    }
+
+    if (!found_sth) {
+        set_font_slot(idx, false);
+        return ILLEGAL_FONT_ID;
+    }
+
+    return idx;
+}
+
+bool cuc_engine_unload_font(font_index_t index) {
+    return set_font_slot(index, false);
+}
+
+loaded_font_t *cuc_engine_get_font(font_index_t index) {
+    if (index >= MAX_LOADED_FONTS) {
+        return NULL;
+    }
+
+    if (index == ILLEGAL_FONT_ID) {
+        return NULL;
+    }
+
+    if (is_font_slot_empty(index)) {
+        return NULL;
+    }
+
+    return &engine.fonts[index];
+}
+
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue) {
     clue_stack_t *back_clue_stack = get_room_back_clue_stack(room_index);
 
@@ -462,6 +551,20 @@ bool cuc_engine_set_current_draw_layer(draw_layer_id_t layer) {
 }
 
 bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin, float rotation, color_t color) {
+    // TODO: add better rule out checks
+
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
+    if (rect.width == 0 || rect.height == 0) {
+        return false;
+    }
+
+    if (color.a == 0) {
+        return false;
+    }
+
     draw_call_t draw_call = {
         .kind = DRAW_CALL_KIND_RECT,
         .as = { .rect = { .rect = rect, .origin = origin, .rotation = rotation, .color = color } },
@@ -471,6 +574,20 @@ bool cuc_engine_draw_rect(room_index_t room_index, rectf_t rect, vec2f_t origin,
 }
 
 bool cuc_engine_draw_circle(room_index_t room_index, circle_t circle, color_t color) {
+    // TODO: add better rule out checks
+
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
+    if (circle.radius == 0) {
+        return false;
+    }
+
+    if (color.a == 0) {
+        return false;
+    }
+    
     circle_sector_t circle_sector = { .center = circle.center, .radius = circle.radius, .start_angle = 0.0f, .end_angle = 360.0f };
     
     draw_call_t draw_call = {
@@ -482,6 +599,12 @@ bool cuc_engine_draw_circle(room_index_t room_index, circle_t circle, color_t co
 }
 
 bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circle_sector, color_t color) {
+    // TODO: add better rule out checks
+
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
     draw_call_t draw_call = {
         .kind = DRAW_CALL_CIRCLE_SECTOR,
         .as = { .circle_sector = { .circle_sector = circle_sector, .color = color } },
@@ -491,6 +614,12 @@ bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circ
 }
 
 bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color) {
+    // TODO: add better rule out checks
+
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+    
     draw_call_t draw_call = {
         .kind = DRAW_CALL_RING,
         .as = { .ring = { .ring = ring, .color = color } },
@@ -500,6 +629,23 @@ bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color) {
 }
 
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation) {
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
+    if (texture_index == ILLEGAL_TEXTURE_ID) {
+        return false;
+    }
+
+    // NOTE: check if src width and height isn't zero
+    if (!check_collision_aabb_aabb(src, cuc_engine_get_texture_src_rect(texture_index))) {
+        return false;
+    }
+
+    if (dest.width == 0 || dest.height == 0) {
+        return false;
+    }
+    
     texture_draw_call_t texture_draw_call = {
         .index = texture_index,
         .src = src,
@@ -513,6 +659,50 @@ bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_in
         .as = { .texture = texture_draw_call },
     };
     
+    return room_push_draw_call(room_index, draw_call);
+}
+
+bool cuc_engine_draw_text(room_index_t room_index, font_index_t font_index, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint) {
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
+    if (font_index == ILLEGAL_FONT_ID) {
+        return false;
+    }
+
+    if (text == NULL) {
+        return false;
+    }
+
+    if (text[0] == '\0') {
+        return false;
+    }
+
+    if (font_size == 0) {
+        return false;
+    }
+
+    if (tint.a == 0) {
+        return false;
+    }
+
+    text_draw_call_t text_draw_call = {
+        .font_index = font_index,
+        .text = text,
+        .pos = pos,
+        .origin = origin,
+        .rotation = rotation,
+        .font_size = font_size,
+        .spacing = spacing,
+        .tint = tint,
+    };
+
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_KIND_TEXT,
+        .as = { .text = text_draw_call },
+    };
+
     return room_push_draw_call(room_index, draw_call);
 }
 
@@ -697,7 +887,7 @@ bool is_texture_slot_empty(texture_index_t index) {
 
     size_t idx = index/8;
     uint8_t mask = 1 << (index%8);
-    return (engine.room_slots[idx]&mask) == 0;
+    return (engine.texture_slots[idx]&mask) == 0;
 }
 
 bool set_texture_slot(texture_index_t index, bool value) {
@@ -711,8 +901,39 @@ bool set_texture_slot(texture_index_t index, bool value) {
 
     size_t idx = index/8;
     uint8_t mask = 1 << (index%8);
-    engine.room_slots[idx] &= ~mask;
-    engine.room_slots[idx] |= (value&1) << (index%8);
+    engine.texture_slots[idx] &= ~mask;
+    engine.texture_slots[idx] |= (value&1) << (index%8);
+
+    return true;
+}
+
+bool is_font_slot_empty(font_index_t index) {
+    if (index >= MAX_LOADED_FONTS) {
+        return false;
+    }
+
+    if (index == ILLEGAL_FONT_ID) {
+        return false;
+    }
+
+    size_t idx = index/8;
+    uint8_t mask = 1 << (index%8);
+    return (engine.font_slots[idx]&mask) == 0;
+}
+
+bool set_font_slot(font_index_t index, bool value) {
+    if (index >= MAX_LOADED_FONTS) {
+        return false;
+    }
+
+    if (index == ILLEGAL_FONT_ID) {
+        return false;
+    }
+
+    size_t idx = index/8;
+    uint8_t mask = 1 << (index%8);
+    engine.font_slots[idx] &= ~mask;
+    engine.font_slots[idx] |= (value&1) << (index%8);
 
     return true;
 }
@@ -779,6 +1000,19 @@ void draw_draw_call(draw_call_t draw_call) {
             texture, texture_draw_call.src,
             texture_draw_call.dest, texture_draw_call.origin,
             texture_draw_call.rotation, COLOR_WHITE);
+    }break;
+    case DRAW_CALL_KIND_TEXT: {
+        text_draw_call_t text_draw_call = draw_call.as.text;
+
+        loaded_font_t *font = cuc_engine_get_font(text_draw_call.font_index);
+
+        if (font == NULL) {
+            return;
+        }
+
+        platform_draw_text(
+            font->font, text_draw_call.text, text_draw_call.pos, text_draw_call.origin,
+            text_draw_call.rotation, text_draw_call.font_size, text_draw_call.spacing, text_draw_call.tint);
     }break;
     default: {
         assert(0 && "Unknown draw call");

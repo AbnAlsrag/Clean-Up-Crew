@@ -23,11 +23,14 @@
 #define MAX_CLUE_QUERY_STACKS MAX_ROOM_CONNECTIONS+1
 #define MAX_LOADED_TEXTURES 50
 #define TEXTURE_SLOTS_SIZE ((MAX_LOADED_TEXTURES+7)/8)
+#define MAX_LOADED_FONTS 10
+#define FONT_SLOTS_SIZE ((MAX_LOADED_FONTS+7)/8)
 
 #define ILLEGAL_ENTITY_ID ((entity_id_t)-1)
 #define EMPTY_ENTITY_HANDLER ((entity_handler_id_t)0)
 #define ILLEGAL_ROOM_ID ((room_id_t)-1)
 #define ILLEGAL_TEXTURE_ID ((texture_id_t)-1)
+#define ILLEGAL_FONT_ID ((font_id_t)-1)
 
 typedef uint16_t entity_id_t;
 typedef uint16_t entity_index_t;
@@ -36,6 +39,8 @@ typedef uint16_t room_index_t;
 typedef uint8_t draw_layer_id_t;
 typedef uint16_t texture_id_t;
 typedef uint16_t texture_index_t;
+typedef uint8_t font_id_t;
+typedef uint8_t font_index_t;
 
 typedef void(*entity_handler_t)(entity_index_t entity_index);
 typedef uint16_t entity_handler_id_t;
@@ -109,11 +114,23 @@ typedef struct texture_draw_call_t {
     float rotation;
 } texture_draw_call_t;
 
+typedef struct text_draw_call_t {
+    font_index_t font_index;
+    const char *text;
+    vec2f_t pos;
+    vec2f_t origin;
+    float rotation;
+    float font_size;
+    float spacing;
+    color_t tint;
+} text_draw_call_t;
+
 typedef enum draw_call_kind_t {
     DRAW_CALL_KIND_RECT = 0,
     DRAW_CALL_CIRCLE_SECTOR,
     DRAW_CALL_RING,
     DRAW_CALL_KIND_TEXTURE,
+    DRAW_CALL_KIND_TEXT,
 } draw_call_kind_t;
 
 typedef union draw_call_as_t {
@@ -121,6 +138,7 @@ typedef union draw_call_as_t {
     circle_sector_draw_call_t circle_sector;
     ring_draw_call_t ring;
     texture_draw_call_t texture;
+    text_draw_call_t text;
 } draw_call_as_t;
 
 typedef struct draw_call_t {
@@ -169,6 +187,11 @@ typedef struct loaded_texture_t {
     platform_texture_t texture;
 } loaded_texture_t;
 
+typedef struct loaded_font_t {
+    font_id_t id;
+    platform_font_t font;
+} loaded_font_t;
+
 typedef struct cuc_engine_t {
     splitscreen_t splitscreens[MAX_SPLITSCREENS];
     uint8_t splitscreen_count;
@@ -186,6 +209,9 @@ typedef struct cuc_engine_t {
 
     loaded_texture_t textures[MAX_LOADED_TEXTURES];
     uint8_t texture_slots[TEXTURE_SLOTS_SIZE];
+
+    loaded_font_t fonts[MAX_LOADED_FONTS];
+    uint8_t font_slots[FONT_SLOTS_SIZE];
 
     color_t clear_color;
 } cuc_engine_t;
@@ -227,6 +253,11 @@ bool cuc_engine_unload_texture(texture_index_t index);
 loaded_texture_t *cuc_engine_get_texture(texture_index_t index);
 rectf_t cuc_engine_get_texture_src_rect(texture_index_t index);
 
+font_index_t cuc_engine_load_font_from_ttf_file(const char *path, font_id_t id, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count);
+font_index_t cuc_engine_load_font_from_platform_font(platform_font_t platform_font, font_id_t id);
+bool cuc_engine_unload_font(font_index_t index);
+loaded_font_t *cuc_engine_get_font(font_index_t index);
+
 bool cuc_engine_emit_clue(room_index_t room_index, clue_t clue);
 clue_query_t cuc_engine_query_clues(room_index_t room_index);
 
@@ -237,5 +268,6 @@ bool cuc_engine_draw_circle(room_index_t room_index, circle_t circle, color_t co
 bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circle_sector, color_t color);
 bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color);
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation);
+bool cuc_engine_draw_text(room_index_t room_index, font_index_t font_index, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint);
 
 #endif // _CUC_ENGINE_H_
