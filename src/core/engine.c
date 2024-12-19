@@ -100,9 +100,6 @@ void cuc_engine_update(void) {
         compute_splitscreen_rects();
     }
 
-    // NOTE: this is just temporary because i don't know how to clear the draw call stacks effeciently for not :>
-    bool drawn_rooms[MAX_ROOMS] = {0};
-
     cuc_tick_update();
 
     platform_begin_drawing();
@@ -116,9 +113,7 @@ void cuc_engine_update(void) {
         platform_begin_camera(splitscreen->player.camera);
             platform_clear_background(engine.clear_color);
             // platform_clear_background(COLOR_RED);
-            draw_room(player_entity->room);
-            
-            drawn_rooms[player_entity->room] = true;
+            draw_room(player_entity->room);            
         platform_end_camera();
         platform_end_viewport();
     }
@@ -126,12 +121,8 @@ void cuc_engine_update(void) {
     platform_end_drawing();
 
     for (size_t i = 0; i < MAX_ROOMS; i++) {
-        if (!drawn_rooms[i]) {
-            continue;
-        }
-
         for (size_t j = 0; j < MAX_DRAW_LAYERS; j++) {
-            engine.rooms[i].draw_layers[j] = (draw_layer_t) {0};
+            engine.rooms[i].draw_layers[j].draw_call_count = 0;
         }
     }
 }

@@ -225,9 +225,9 @@ typedef uint32_t platform_codepoint_t;
 
 typedef struct platform_glyph_info_t {
     platform_codepoint_t codepoint;
-    uint32_t offset_x;
-    uint32_t offset_y;
-    uint32_t advance_x;
+    int32_t offset_x;
+    int32_t offset_y;
+    int32_t advance_x;
     rectf_t rect;
 } platform_glyph_info_t;
 
@@ -247,6 +247,7 @@ bool platform_was_window_resized(void);
 vec2f_t platform_get_window_size(void);
 void *platform_get_native_window_handle(void);
 
+// TODO: add cursor handling functions like hide and lock functions
 // TODO: maybe add keyboard specific input like in gamepads idk
 
 bool platform_is_key_pressed(platform_keycode_t keycode);
@@ -309,11 +310,14 @@ vec2f_t platform_get_screen_to_world(platform_camera_t camera, vec2f_t pos);
 
 platform_texture_t platform_load_texture(const char *file_path);
 bool platform_is_texture_valid(platform_texture_t texture);
+rectf_t platform_get_texture_src_rect(platform_texture_t texture);
 void platform_unload_texture(platform_texture_t texture);
 platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t height);
 void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer);
 
+platform_font_t platform_get_default_font(void);
 platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info);
+bool platform_is_font_valid(platform_font_t font);
 void platform_unload_font(platform_font_t font);
 
 void platform_draw_fps(vec2f_t pos);

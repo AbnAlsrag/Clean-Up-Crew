@@ -3,6 +3,10 @@
 
 #include <math.h>
 
+timer_t start_timer(double lifetime) {
+    return (timer_t) { .start_time = platform_get_time(), .lifetime = lifetime };
+}
+
 bool is_timer_finished(timer_t timer) {
     return platform_get_time() - timer.start_time >= timer.lifetime;
 }
@@ -227,6 +231,17 @@ vec2f_t vec2f_cartesian2polar(vec2f_t vec) {
 
 vec2f_t vec2f_polar2cartesian(vec2f_t vec) {
     return (vec2f_t) { vec.x * cosf(deg_to_radf(vec.y)), vec.x * sinf(deg_to_radf(vec.y)) };
+}
+
+rectf_t rectf_scale(rectf_t rect, float scalar) {
+    rectf_t result = RECTANGLE_ZERO;
+
+    result.x = rect.x * scalar;
+    result.y = rect.y * scalar;
+    result.width = rect.width * scalar;
+    result.height = rect.height * scalar;
+
+    return result;
 }
 
 color_t color_from_u32(uint32_t value) {

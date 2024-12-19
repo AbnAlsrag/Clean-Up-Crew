@@ -96,6 +96,7 @@ typedef struct timer_t {
     double lifetime;
 } timer_t;
 
+timer_t start_timer(double lifetime);
 bool is_timer_finished(timer_t timer);
 double get_elapsed_time(timer_t timer);
 
@@ -136,6 +137,8 @@ float vec2f_inv_lerp(vec2f_t a, vec2f_t b, vec2f_t value);
 vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t);
 vec2f_t vec2f_cartesian2polar(vec2f_t vec);
 vec2f_t vec2f_polar2cartesian(vec2f_t vec);
+
+rectf_t rectf_scale(rectf_t rect, float scalar);
 
 color_t color_from_u32(uint32_t value);
 uint32_t color_to_u32(color_t color);

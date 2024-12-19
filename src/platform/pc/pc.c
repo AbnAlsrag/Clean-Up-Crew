@@ -6,6 +6,8 @@
 #include <raylib/raylib.h>
 #include <raylib/rlgl.h>
 
+#define DEFAULT_FONT_GLYPH_COUNT 224
+
 typedef struct internal_data_t {
     platform_config_t config;
     bool is_viewport_active;
@@ -14,7 +16,12 @@ typedef struct internal_data_t {
     platform_camera_t active_camera;
     bool is_wireframe_mode_active;
     bool toggle_borderless_windowed;
+    ssize_t text_line_spacing;
+    platform_font_t default_font;
+    platform_glyph_info_t default_font_glyph_info[DEFAULT_FONT_GLYPH_COUNT];
 } internal_data_t;
+
+// int x = sizeof(internal_data_t);
 
 static internal_data_t internal_data = {0};
 
@@ -40,6 +47,7 @@ Sound sound_to_raylib_Sound(platform_sound_t sound);
 RenderTexture2D frame_buffer_to_raylibe_RenderTexture2D(platform_frame_buffer_t frame_buffer);
 size_t text_lenght(const char *text);
 platform_codepoint_t get_next_codepoint(const char *text, size_t *out_codepoint_size);
+size_t get_code_point_index(platform_font_t font, platform_codepoint_t codepoint, bool *out_found);
 
 #include <stdio.h>
 
@@ -60,6 +68,29 @@ void platform_init(platform_config_t config) {
     internal_data.config = config;
     internal_data.config.width = GetScreenWidth();
     internal_data.config.height = GetScreenHeight();
+    internal_data.text_line_spacing = 2;
+
+
+    {
+        Font default_font = GetFontDefault();
+
+        internal_data.default_font.glyphs = internal_data.default_font_glyph_info;
+        internal_data.default_font.glyph_padding = 0;
+        internal_data.default_font.glyph_count = default_font.glyphCount;
+        internal_data.default_font.size = default_font.baseSize;
+        internal_data.default_font.texture = raylib_Texture2D_to_texture(default_font.texture);
+        
+        for (size_t i = 0; i < default_font.glyphCount && i < DEFAULT_FONT_GLYPH_COUNT; i++) {
+            GlyphInfo ray_glyph = default_font.glyphs[i];
+            Rectangle ray_glyph_rect = default_font.recs[i];
+            
+            internal_data.default_font.glyphs[i].codepoint = ray_glyph.value;
+            internal_data.default_font.glyphs[i].offset_x = ray_glyph.offsetX;
+            internal_data.default_font.glyphs[i].offset_y = ray_glyph.offsetY;
+            internal_data.default_font.glyphs[i].advance_x = ray_glyph.advanceX;
+            internal_data.default_font.glyphs[i].rect = raylib_Rectangle_to_rectf(ray_glyph_rect);
+        }
+    }
 }
 
 void platform_reconfig(platform_config_t config) {
@@ -409,6 +440,10 @@ bool platform_is_texture_valid(platform_texture_t texture) {
     return IsTextureValid(texture_to_raylib_Texture2D(texture));
 }
 
+rectf_t platform_get_texture_src_rect(platform_texture_t texture) {
+    return (rectf_t) { 0, 0, texture.width, texture.height };
+}
+
 void platform_unload_texture(platform_texture_t texture) {
     UnloadTexture(texture_to_raylib_Texture2D(texture));
 }
@@ -444,6 +479,10 @@ void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer) {
     }
 }
 
+platform_font_t platform_get_default_font(void) {
+    return internal_data.default_font;
+}
+
 // TODO: add logging
 platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count, platform_glyph_info_t *glyph_info) {
     platform_font_t result = {0};
@@ -475,6 +514,14 @@ platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t
         glyph_info[i].offset_y = ray_glyph.offsetY;
         glyph_info[i].advance_x = ray_glyph.advanceX;
         glyph_info[i].rect = raylib_Rectangle_to_rectf(ray_glyph_rect);
+
+        if (ray_glyph.value == 0x0631) {
+            glyph_info[i].offset_x = 0;
+        }
+
+        if (ray_glyph.value == 0x0648) {
+            glyph_info[i].offset_x = 0;
+        }
     }
 
     result.size = font_size;
@@ -487,6 +534,13 @@ platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t
     RL_FREE(font.recs);
 
     return result;
+}
+
+bool platform_is_font_valid(platform_font_t font) {
+    return ((font.size > 0) &&
+            (font.glyph_count > 0) &&
+            (font.glyphs != NULL) &&
+            (platform_is_texture_valid(font.texture)));
 }
 
 void platform_unload_font(platform_font_t font) {
@@ -542,12 +596,62 @@ void platform_draw_text(platform_font_t font, const char *text, vec2f_t pos, vec
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
         rlTranslatef(-origin.x, -origin.y, 0.0f);
 
+        // NOTE: idk
+        if (!platform_is_texture_valid(font.texture)) {
+            return;
+        }
 
+        size_t text_len = text_lenght(text);
+
+        float offset_x = 0.0f;
+        float offset_y = 0.0f;
+
+        float scale_factor = font_size/font.size;
+
+        for (size_t i = 0; i < text_len;) {
+            // TODO: handle when the codepoint isn't found and can't fallback
+            size_t codepoint_byte_size = 0;
+            platform_codepoint_t codepoint = get_next_codepoint(&text[i], &codepoint_byte_size);
+            size_t index = get_code_point_index(font, codepoint, NULL);
+
+            if (codepoint == '\n') {
+                offset_y += (font_size + internal_data.text_line_spacing);
+                offset_x = 0.0f;
+            } else {
+                if ((codepoint != ' ') && (codepoint != '\t')) {
+                    platform_draw_codepoint(font, codepoint, (vec2f_t) { pos.x + offset_x, pos.y + offset_y }, font_size, tint);
+                }
+
+                if (font.glyphs[index].advance_x == 0) {
+                    offset_x += ((float)font.glyphs[index].rect.width*scale_factor + spacing);
+                } else {
+                    offset_x += ((float)font.glyphs[index].advance_x + spacing);
+                }
+            }
+
+            i += codepoint_byte_size;
+        }
 
     rlPopMatrix();
 }
 
-void platform_draw_codepoint(platform_font_t font, platform_codepoint_t codepoint, vec2f_t position, float font_size, color_t tint);
+void platform_draw_codepoint(platform_font_t font, platform_codepoint_t codepoint, vec2f_t position, float font_size, color_t tint) {
+    bool found = false;
+    size_t index = get_code_point_index(font, codepoint, &found);
+    // printf("%u index = %zu, found = %d\n", codepoint, index, found);
+    float scale_factor = font_size/font.size;
+    // printf("glyph_padding = %u, scale_factor = %f\n", font.glyph_padding, scale_factor);
+
+    rectf_t dest = { position.x + font.glyphs[index].offset_x*scale_factor - (float)font.glyph_padding*scale_factor,
+                      position.y + font.glyphs[index].offset_y*scale_factor - (float)font.glyph_padding*scale_factor,
+                      (font.glyphs[index].rect.width + 2.0f*font.glyph_padding)*scale_factor,
+                      (font.glyphs[index].rect.height + 2.0f*font.glyph_padding)*scale_factor };
+
+    rectf_t src = { font.glyphs[index].rect.x - (float)font.glyph_padding, font.glyphs[index].rect.y - (float)font.glyph_padding,
+                    font.glyphs[index].rect.width + 2.0f*font.glyph_padding, font.glyphs[index].rect.height + 2.0f*font.glyph_padding };
+
+    platform_draw_texture(font.texture, src, dest, VECTOR2_ZERO, 0.0f, tint);
+}
 
 float platform_get_delta_time(void) {
     return GetFrameTime();
@@ -985,5 +1089,68 @@ size_t text_lenght(const char *text) {
 }
 
 platform_codepoint_t get_next_codepoint(const char *text, size_t *out_codepoint_size) {
-    
+    const char *ptr = text;
+    platform_codepoint_t codepoint = 0x3f;
+    size_t codepoint_size = 0;
+
+    if (0xf0 == (0xf8 & ptr[0])) {
+        if (!(((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80) || ((ptr[3] & 0xC0) ^ 0x80))) {
+            codepoint = ((0x07 & ptr[0]) << 18) | ((0x3f & ptr[1]) << 12) | ((0x3f & ptr[2]) << 6) | (0x3f & ptr[3]);
+            codepoint_size = 4;
+        }
+    } else if (0xe0 == (0xf0 & ptr[0])) {
+        if (!(((ptr[1] & 0xC0) ^ 0x80) || ((ptr[2] & 0xC0) ^ 0x80))) {
+            codepoint = ((0x0f & ptr[0]) << 12) | ((0x3f & ptr[1]) << 6) | (0x3f & ptr[2]);
+            codepoint_size = 3;
+        }
+    } else if (0xc0 == (0xe0 & ptr[0])) {
+        if (!((ptr[1] & 0xC0) ^ 0x80)) {
+            codepoint = ((0x1f & ptr[0]) << 6) | (0x3f & ptr[1]);
+            codepoint_size = 2;
+        }
+    } else if (0x00 == (0x80 & ptr[0])) {
+        codepoint = ptr[0];
+        codepoint_size = 1;
+    } else {
+        codepoint = 0x3f;
+        codepoint_size = 0;
+    }
+
+    if (out_codepoint_size != NULL) {
+        *out_codepoint_size = codepoint_size;
+    }
+
+    return codepoint;
+}
+
+size_t get_code_point_index(platform_font_t font, platform_codepoint_t codepoint, bool *out_found) {
+    size_t index = 0;
+    bool found = false;
+
+    const platform_codepoint_t fallback_codepoint = '?';
+
+    if (platform_is_font_valid(font)) {
+        size_t fallback = 0;
+        
+        for (size_t i = 0; i < font.glyph_count; i++) {
+            if (font.glyphs[i].codepoint == fallback_codepoint) {
+                fallback = i;
+            }
+
+            if (font.glyphs[i].codepoint == codepoint) {
+                index = i;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            index = fallback;
+        }
+    }
+
+    if (out_found != NULL) {
+        *out_found = found;
+    }
+
+    return index;
 }
