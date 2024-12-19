@@ -216,7 +216,7 @@ typedef struct cuc_engine_t {
     color_t clear_color;
 } cuc_engine_t;
 
-// int x = sizeof(cuc_engine_t); 
+// int x = sizeof(cuc_engine_t);
 // int x = sizeof(room_t);
 // int x = sizeof(draw_call_t);
 

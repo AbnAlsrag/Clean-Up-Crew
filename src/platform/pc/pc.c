@@ -25,6 +25,7 @@ typedef struct internal_data_t {
 
 static internal_data_t internal_data = {0};
 
+// TODO: make the internal functions static
 uint32_t get_raylib_config_flags(platform_config_flags_t config_flags);
 BlendMode get_raylib_blend_mode(platform_blend_mode_t mode);
 KeyboardKey get_raylib_keyboard_key(platform_keycode_t keycode);
@@ -479,6 +480,10 @@ void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer) {
     }
 }
 
+void platform_set_text_line_spacing(ssize_t spacing) {
+    internal_data.text_line_spacing = spacing;
+}
+
 platform_font_t platform_get_default_font(void) {
     return internal_data.default_font;
 }
@@ -557,6 +562,79 @@ void platform_unload_font(platform_font_t font) {
     if (font.glyphs != NULL) {
         RL_FREE(font.glyphs);
     }
+}
+
+// TODO: test this functions
+vec2f_t platform_measure_text(platform_font_t font, const char *text, float font_size, float spacing) {
+    vec2f_t text_size = VECTOR2_ZERO;
+
+    if (text == NULL) {
+        return VECTOR2_ZERO;
+    }
+
+    if (text[0] == '\0') {
+        return VECTOR2_ZERO;
+    }
+
+    if (!platform_is_font_valid(font)) {
+        return VECTOR2_ZERO;
+    }
+
+    size_t text_len = text_lenght(text);
+
+    size_t char_counter = 0;
+    size_t tmp_char_counter = 0;
+
+    float text_width = 0.0f;
+    float current_line_width = 0.0f;
+
+    float text_height = font_size;
+
+    float scale_factor = font_size/font.size;
+
+    for (size_t i = 0; i < text_len;) {
+        size_t codepoint_byte_size = 0;
+        platform_codepoint_t codepoint = get_next_codepoint(&text[i], &codepoint_byte_size);
+        size_t codepoint_index = get_code_point_index(font, codepoint, NULL);
+
+        tmp_char_counter += 1;
+
+        if (codepoint != '\n') {
+            if (font.glyphs[codepoint_index].advance_x != 0) {
+                current_line_width += font.glyphs[codepoint_index].advance_x;
+            } else {
+                current_line_width += (font.glyphs[codepoint_index].rect.width + font.glyphs[codepoint_index].offset_x);
+            }
+        } else {
+            if (text_width < current_line_width) {
+                text_width = current_line_width;
+            }
+
+            tmp_char_counter = 0;
+            current_line_width = 0;
+
+            text_height += (font_size + internal_data.text_line_spacing);
+        }
+
+        if (char_counter < tmp_char_counter) {
+            char_counter = tmp_char_counter;
+        }
+
+        if (codepoint_byte_size == 0) {
+            break;
+        }
+
+        i += codepoint_byte_size;
+    }
+
+    if (text_width < current_line_width) {
+        text_width = current_line_width;
+    }
+
+    text_size.x = text_width*scale_factor + (float)((char_counter - 1)*spacing);
+    text_size.y = text_height;
+
+    return text_size;
 }
 
 void platform_draw_fps(vec2f_t pos) {

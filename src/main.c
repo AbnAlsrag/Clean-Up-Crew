@@ -230,7 +230,7 @@ void update_game(void) {
                 player0_bullets[i].active = false;
             }
 
-            if (check_collision_aabb_circle(player1_rect, bullet_circle) && !player0_bullets[i].hit) {
+            if (check_collision_circle_circle(player1_circle, bullet_circle) && !player0_bullets[i].hit) {
                 player1_health -= 1;
                 player0_bullets[i].hit = true;
                 player0_bullets[i].active = false;
@@ -251,7 +251,7 @@ void update_game(void) {
                 player1_bullets[i].active = false;
             }
 
-            if (check_collision_aabb_circle(player0_rect, bullet_circle) && !player1_bullets[i].hit) {
+            if (check_collision_circle_circle(player0_circle, bullet_circle) && !player1_bullets[i].hit) {
                 player0_health -= 1;
                 player1_bullets[i].hit = true;
                 player1_bullets[i].active = false;

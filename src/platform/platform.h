@@ -316,10 +316,12 @@ void platform_unload_texture(platform_texture_t texture);
 platform_frame_buffer_t platform_load_frame_buffer(uint32_t width, uint32_t height);
 void platform_unload_frame_buffer(platform_frame_buffer_t frame_buffer);
 
+void platform_set_text_line_spacing(ssize_t spacing);
 platform_font_t platform_get_default_font(void);
 platform_font_t platform_load_font_from_ttf_file(const char *file_path, uint32_t font_size, platform_codepoint_t *codepoints, size_t codepoint_count);
 bool platform_is_font_valid(platform_font_t font);
 void platform_unload_font(platform_font_t font);
+vec2f_t platform_measure_text(platform_font_t font, const char *text, float font_size, float spacing);
 
 void platform_draw_fps(vec2f_t pos);
 void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t tint);
