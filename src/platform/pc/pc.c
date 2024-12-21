@@ -641,12 +641,57 @@ void platform_draw_fps(vec2f_t pos) {
     DrawFPS(pos.x, pos.y);
 }
 
+void platform_draw_pixel(vec2f_t pos, color_t color) {
+    DrawPixelV(vec2f_to_raylib_Vector2(pos), color_to_raylib_Color(color));
+}
+
 void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t tint) {
     DrawLineEx(vec2f_to_raylib_Vector2(start), vec2f_to_raylib_Vector2(end), thickness, color_to_raylib_Color(tint));
 }
 
-void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t tint) {
-    DrawTriangle(vec2f_to_raylib_Vector2(point0), vec2f_to_raylib_Vector2(point1), vec2f_to_raylib_Vector2(point2), color_to_raylib_Color(tint));
+void platform_draw_triangle(triangle_t triangle, color_t tint) {
+    DrawTriangle(vec2f_to_raylib_Vector2(triangle.point0), vec2f_to_raylib_Vector2(triangle.point1), vec2f_to_raylib_Vector2(triangle.point2), color_to_raylib_Color(tint));
+}
+
+// TODO: consider early returning if alpha is 0
+void platform_draw_triangles(const triangle_t *triangles, size_t triangle_count, color_t tint) {
+    if (triangles == NULL) {
+        return;
+    }
+
+    if (triangle_count == 0) {
+        return;
+    }
+
+    for (size_t i = 0; i < triangle_count; i++) {
+        platform_draw_triangle(triangles[i], tint);
+    }
+}
+
+// TODO: consider early returning if alpha is 0
+void platform_draw_triangle_strip(const vec2f_t *points, size_t point_count, color_t tint) {
+    if (points == NULL) {
+        return;
+    }
+
+    if (point_count == 0) {
+        return;
+    }
+    
+    DrawTriangleStrip(((Vector2*)(void*)points), point_count, color_to_raylib_Color(tint));
+}
+
+// TODO: consider early returning if alpha is 0
+void platform_draw_triangle_fan(const vec2f_t *points, size_t point_count, color_t tint) {
+    if (points == NULL) {
+        return;
+    }
+
+    if (point_count == 0) {
+        return;
+    }
+    
+    DrawTriangleFan(((Vector2*)(void*)points), point_count, color_to_raylib_Color(tint));
 }
 
 void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t tint) {
@@ -682,7 +727,6 @@ void platform_draw_frame_buffer(platform_frame_buffer_t frame_buffer, rectf_t so
 void platform_draw_text(platform_font_t font, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint) {
     rlPushMatrix();
 
-        rlTranslatef(pos.x, pos.y, 0.0f);
         rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
         rlTranslatef(-origin.x, -origin.y, 0.0f);
 

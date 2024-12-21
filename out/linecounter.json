@@ -1,0 +1,385 @@
+{
+    "extension": "linecounter",
+    "version": "0.2.7",
+    "workspace": "h:\\HALM games studio\\games\\Clean Up Crew",
+    "linecount": [
+        {
+            "version": "0.2.7",
+            "counttime": "2024-12-21 16:44:26",
+            "filesum": 50,
+            "codesum": 16053,
+            "commentsum": 46504,
+            "blanksum": 3723,
+            "statistics": {
+                ".c": {
+                    "code": 2738,
+                    "comment": 99,
+                    "blank": 786
+                },
+                ".cucbf": {
+                    "code": 1,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".h": {
+                    "code": 12870,
+                    "comment": 3906,
+                    "blank": 2897
+                },
+                ".txt": {
+                    "code": 0,
+                    "comment": 0,
+                    "blank": 1
+                },
+                ".py": {
+                    "code": 94,
+                    "comment": 0,
+                    "blank": 27
+                },
+                "": {
+                    "code": 18,
+                    "comment": 0,
+                    "blank": 4
+                },
+                ".js": {
+                    "code": 32,
+                    "comment": 0,
+                    "blank": 8
+                },
+                ".pdf": {
+                    "code": 300,
+                    "comment": 42499,
+                    "blank": 0
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": ".gitignore"
+                },
+                {
+                    "filename": "a.out",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "bin\\debug\\CUC.exe",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 27,
+                    "code": 94,
+                    "comment": 0,
+                    "filename": "build.py"
+                },
+                {
+                    "blank": 10,
+                    "code": 31,
+                    "comment": 0,
+                    "filename": "example.c"
+                },
+                {
+                    "blank": 1121,
+                    "code": 4447,
+                    "comment": 546,
+                    "filename": "external\\enet\\enet.h"
+                },
+                {
+                    "filename": "external\\raylib\\libraylib.a",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\libraylibdll.a",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\linux\\libraylib.a",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\linux\\libraylib.so",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\linux\\libraylib.so.5.5.0",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\linux\\libraylib.so.550",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\raylib.dll",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 153,
+                    "code": 1266,
+                    "comment": 1365,
+                    "filename": "external\\raylib\\raylib.h"
+                },
+                {
+                    "blank": 571,
+                    "code": 2064,
+                    "comment": 343,
+                    "filename": "external\\raylib\\raymath.h"
+                },
+                {
+                    "blank": 740,
+                    "code": 3666,
+                    "comment": 1456,
+                    "filename": "external\\raylib\\rlgl.h"
+                },
+                {
+                    "filename": "external\\raylib\\windows\\libraylib.a",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\windows\\libraylibdll.a",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "external\\raylib\\windows\\raylib.dll",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 4,
+                    "code": 17,
+                    "comment": 0,
+                    "filename": "LICENSE"
+                },
+                {
+                    "filename": "raylib.dll",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 300,
+                    "comment": 42499,
+                    "filename": "raylib_cheatsheet_v5.0.pdf"
+                },
+                {
+                    "blank": 1,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "README.txt"
+                },
+                {
+                    "filename": "resources\\fonts\\ARS.ttf",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "resources\\fonts\\DejaVuSans.ttf",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "resources\\imgs\\test.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "resources\\sounds\\test.wav",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 64,
+                    "code": 248,
+                    "comment": 7,
+                    "filename": "rrr.h"
+                },
+                {
+                    "filename": "screenshot000.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "screenshot001.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "screenshot002.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "screenshot003.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "screenshot004.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "screenshot005.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 32,
+                    "code": 76,
+                    "comment": 2,
+                    "filename": "src\\core\\bfs.h"
+                },
+                {
+                    "blank": 8,
+                    "code": 32,
+                    "comment": 0,
+                    "filename": "src\\core\\class Weapon {.js"
+                },
+                {
+                    "blank": 119,
+                    "code": 360,
+                    "comment": 28,
+                    "filename": "src\\core\\cuc_utils.c"
+                },
+                {
+                    "blank": 30,
+                    "code": 160,
+                    "comment": 7,
+                    "filename": "src\\core\\cuc_utils.h"
+                },
+                {
+                    "blank": 260,
+                    "code": 860,
+                    "comment": 16,
+                    "filename": "src\\core\\engine.c"
+                },
+                {
+                    "blank": 46,
+                    "code": 234,
+                    "comment": 4,
+                    "filename": "src\\core\\engine.h"
+                },
+                {
+                    "blank": 76,
+                    "code": 260,
+                    "comment": 13,
+                    "filename": "src\\main.c"
+                },
+                {
+                    "blank": 248,
+                    "code": 1009,
+                    "comment": 40,
+                    "filename": "src\\platform\\pc\\pc.c"
+                },
+                {
+                    "blank": 34,
+                    "code": 311,
+                    "comment": 145,
+                    "filename": "src\\platform\\platform.h"
+                },
+                {
+                    "blank": 17,
+                    "code": 52,
+                    "comment": 1,
+                    "filename": "test.c"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "test.cucbf"
+                },
+                {
+                    "filename": "test.exe",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "test.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "tools\\bin\\debug\\editor.exe",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 56,
+                    "code": 166,
+                    "comment": 1,
+                    "filename": "tools\\editor\\src\\editor.c"
+                },
+                {
+                    "blank": 106,
+                    "code": 398,
+                    "comment": 31,
+                    "filename": "tools\\editor\\src\\imgui.h"
+                }
+            ]
+        }
+    ]
+}

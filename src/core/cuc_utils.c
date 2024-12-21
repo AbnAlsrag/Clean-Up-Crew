@@ -327,6 +327,91 @@ bool check_collision_circle_point(circle_t circle, vec2f_t point) {
     return (distance_squared <= (circle.radius*circle.radius));
 }
 
+aabb_t circle_bounding_box(circle_t circle) {
+    aabb_t result = RECTANGLE_ZERO;
+
+    result.x = circle.center.x - circle.radius;
+    result.y = circle.center.y - circle.radius;
+    result.width= circle.radius + circle.radius;
+    result.height = circle.radius + circle.radius;
+
+    return result;
+}
+
+aabb_t obb_bounding_box(obb_t obb) {
+    // OBB center
+    float centerX = obb.rect.x + obb.rect.width / 2.0f;
+    float centerY = obb.rect.y + obb.rect.height / 2.0f;
+
+    // Half-extents
+    float halfWidth = obb.rect.width / 2.0f;
+    float halfHeight = obb.rect.height / 2.0f;
+
+    // Precompute rotation matrix components
+    float cosAngle = cosf(obb.rotation);
+    float sinAngle = sinf(obb.rotation);
+
+    // Corners of the OBB relative to the center
+    float corners[4][2] = {
+        {-halfWidth, -halfHeight},
+        { halfWidth, -halfHeight},
+        { halfWidth,  halfHeight},
+        {-halfWidth,  halfHeight}
+    };
+
+    // Rotate and translate corners
+    float minX = INFINITY, minY = INFINITY;
+    float maxX = -INFINITY, maxY = -INFINITY;
+
+    for (int i = 0; i < 4; ++i) {
+        float rotatedX = cosAngle * corners[i][0] - sinAngle * corners[i][1];
+        float rotatedY = sinAngle * corners[i][0] + cosAngle * corners[i][1];
+
+        float worldX = rotatedX + centerX;
+        float worldY = rotatedY + centerY;
+
+        if (worldX < minX) minX = worldX;
+        if (worldY < minY) minY = worldY;
+        if (worldX > maxX) maxX = worldX;
+        if (worldY > maxY) maxY = worldY;
+    }
+
+    // AABB
+    aabb_t aabb;
+    aabb.x = minX;
+    aabb.y = minY;
+    aabb.width = maxX - minX;
+    aabb.height = maxY - minY;
+
+    return aabb;
+}
+
+obb_corners_t get_obb_corners(obb_t obb) {
+    obb_corners_t corners = {0};
+
+    // Center of the rectangle
+    vec2f_t center = (vec2f_t) { obb.rect.x + obb.rect.width / 2, obb.rect.y + obb.rect.height / 2 };
+
+    // Half extents (relative to center)
+    vec2f_t half_extents = (vec2f_t) { obb.rect.width / 2, obb.rect.height / 2 };
+
+    // Calculate unrotated corner offsets from center
+    vec2f_t offsets[4] = {
+        { -half_extents.x, -half_extents.y }, // Top-left
+        { -half_extents.x,  half_extents.y }, // Bottom-left
+        {  half_extents.x, -half_extents.y }, // Top-right
+        {  half_extents.x,  half_extents.y }  // Bottom-right
+    };
+
+    // Rotate each corner offset and translate back to center
+    for (int i = 0; i < 4; i++) {
+        vec2f_t rotated_offset = vec2f_rotate(offsets[i], obb.rotation);
+        corners.corners[i] = vec2f_add(center, rotated_offset);
+    }
+
+    return corners;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Physics //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////

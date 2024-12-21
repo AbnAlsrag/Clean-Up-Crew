@@ -27,6 +27,8 @@ font_index_t font = ILLEGAL_FONT_ID;
 texture_index_t player_texture = ILLEGAL_TEXTURE_ID;
 float player_size = 100.0f;
 
+char health0_string[] = "health: 0";
+char health1_string[] = "health: 0";
 physics_object_t player0 = { .pos = { 200, 300 }, .mass = 1.0f };
 int player0_health = 5;
 int player0_lives = 5;
@@ -207,18 +209,22 @@ void update_game(void) {
         }
     }
 
+    cuc_engine_set_current_draw_layer(PLAYER_LIVES_LAYER);
     for (size_t i = 0; i < player0_lives; i++) {
-        cuc_engine_set_current_draw_layer(PLAYER_LIVES_LAYER);
         rectf_t life_rect = (rectf_t) { (20+5)*i, 0, 20, 20 };
         cuc_engine_draw_rect(0, life_rect, VECTOR2_ZERO, 0.0f, COLOR_BLUE);
     }
 
     for (size_t i = 0; i < player1_lives; i++) {
-        cuc_engine_set_current_draw_layer(PLAYER_LIVES_LAYER);
         rectf_t life_rect = (rectf_t) { (20+5)*i, 0, 20, 20 };
         life_rect.x += platform_get_window_size().x-((20+5)*5);
         cuc_engine_draw_rect(0, life_rect, VECTOR2_ZERO, 0.0f, COLOR_RED);
     }
+
+    health0_string[8] = player0_health+'0';
+    cuc_engine_draw_text(0, font, health0_string, (vec2f_t) { 5, 20 }, VECTOR2_ZERO, 0.0f, 46, 1.0f, COLOR_BLUE);
+    health1_string[8] = player1_health+'0';
+    cuc_engine_draw_text(0, font, health1_string, (vec2f_t) { platform_get_window_size().x-200, 20 }, VECTOR2_ZERO, 0.0f, 46, 1.0f, COLOR_RED);
 
     for (size_t i = 0; i < BULLET_COUNT; i++) {
         if (player0_bullets[i].active) {
@@ -291,10 +297,17 @@ void manger(entity_index_t manger_entity_index) {
     } else {
         if (player0_lives <= 0) {
             cuc_engine_set_clear_color(COLOR_WHITE);
-            cuc_engine_draw_text(0, font, "RED WON", VECTOR2_ZERO, VECTOR2_ZERO, 0.0f, 56, 2.0f, COLOR_RED);
+            char *text = "RED WON";
+            vec2f_t text_center = vec2f_div_value(platform_measure_text(cuc_engine_get_font(font)->font, text, 60, 2.0f), 2);
+            vec2f_t screen_center = vec2f_div_value(platform_get_window_size(), 2);
+            // cuc_engine_draw_text(0, font, "RED WON", VECTOR2_ZERO, VECTOR2_ZERO, 0.0f, 56, 2.0f, COLOR_RED);
+            cuc_engine_draw_text(0, font, text, screen_center, text_center, 0.0f, 60, 2.0f, COLOR_RED);
         } else if (player1_lives <= 0) {
             cuc_engine_set_clear_color(COLOR_WHITE);
-            cuc_engine_draw_text(0, font, "BLUE WON", VECTOR2_ZERO, VECTOR2_ZERO, 0.0f, 56, 2.0f, COLOR_BLUE);
+            char *text = "BLUE WON";
+            vec2f_t text_center = vec2f_div_value(platform_measure_text(cuc_engine_get_font(font)->font, text, 60, 2.0f), 2);
+            vec2f_t screen_center = vec2f_div_value(platform_get_window_size(), 2);
+            cuc_engine_draw_text(0, font, text, screen_center, text_center, 0.0f, 60, 2.0f, COLOR_BLUE);
             // cuc_engine_set_clear_color(COLOR_BLUE);
         } else {
             reset_state();

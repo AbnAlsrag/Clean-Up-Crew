@@ -324,8 +324,12 @@ void platform_unload_font(platform_font_t font);
 vec2f_t platform_measure_text(platform_font_t font, const char *text, float font_size, float spacing);
 
 void platform_draw_fps(vec2f_t pos);
+void platform_draw_pixel(vec2f_t pos, color_t color);
 void platform_draw_line(vec2f_t start, vec2f_t end, float thickness, color_t tint);
-void platform_draw_triangle(vec2f_t point0, vec2f_t point1, vec2f_t point2, color_t tint);
+void platform_draw_triangle(triangle_t triangles, color_t tint);
+void platform_draw_triangles(const triangle_t *triangle, size_t triangle_count, color_t tint);
+void platform_draw_triangle_strip(const vec2f_t *points, size_t point_count, color_t tint);
+void platform_draw_triangle_fan(const vec2f_t *points, size_t point_count, color_t tint);
 void platform_draw_rect(rectf_t rect, vec2f_t origin, float rotation, color_t tint);
 void platform_draw_circle(vec2f_t center, float radius, color_t tint);
 void platform_draw_circle_sector(vec2f_t center, float radius, float start_angle, float end_angle, color_t tint);

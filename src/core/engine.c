@@ -105,9 +105,12 @@ void cuc_engine_update(void) {
     cuc_tick_update();
 
     platform_begin_drawing();
+    platform_clear_background(engine.clear_color);
     for (size_t i = 0; i < engine.splitscreen_count; i++) {
         splitscreen_t *splitscreen = &engine.splitscreens[i];
         entity_t *player_entity = &engine.entities[splitscreen->player.index];
+        room_t *player_room = cuc_engine_get_room(player_entity->room);
+
         // uint32_t width = splitscreen->viewport.width;
         // uint32_t height = splitscreen->viewport.height;
 
@@ -115,7 +118,10 @@ void cuc_engine_update(void) {
         platform_begin_camera(splitscreen->player.camera);
             platform_clear_background(engine.clear_color);
             // platform_clear_background(COLOR_RED);
-            draw_room(player_entity->room);            
+            draw_room(player_entity->room);
+            for (size_t connection = 0; connection < player_room->connections_count; connection++) {
+                draw_room(player_room->connections[connection].index);
+            }
         platform_end_camera();
         platform_end_viewport();
     }
@@ -706,6 +712,23 @@ bool cuc_engine_draw_text(room_index_t room_index, font_index_t font_index, cons
     return room_push_draw_call(room_index, draw_call);
 }
 
+bool cuc_engine_draw_custom(room_index_t room_index, custom_draw_call_proc_t proc, void *data) {
+    if (room_index == ILLEGAL_ROOM_ID) {
+        return false;
+    }
+
+    if (proc == NULL) {
+        return false;
+    }
+
+    draw_call_t draw_call = {
+        .kind = DRAW_CALL_KIND_CUSTOM,
+        .as = { .custom = { .proc = proc, .data = data } },
+    };
+
+    return room_push_draw_call(room_index, draw_call);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////// INTERNAL /////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -784,6 +807,7 @@ void compute_splitscreen_rects(void) {
     }
 }
 
+// TODO: make it that not all rooms are updated every tick
 void cuc_tick_update(void) {
     for (size_t i = 0; i < MAX_ROOMS && i != ILLEGAL_ROOM_ID; i++) {
         if (is_room_slot_empty(i)) {
@@ -800,7 +824,7 @@ void cuc_tick_update(void) {
             entity_t *entity = cuc_engine_get_entity(room->entities[j]);
 
             if (entity == NULL) {
-                continue;;
+                continue;
             }
 
             entity_handler_t handler = cuc_engine_get_entity_handler(entity->handler_id);
@@ -1010,9 +1034,26 @@ void draw_draw_call(draw_call_t draw_call) {
             return;
         }
 
+        if (text_draw_call.text == NULL) {
+            return;
+        }
+
+        if (text_draw_call.text[0] == '\0') {
+            return;
+        }
+
         platform_draw_text(
             font->font, text_draw_call.text, text_draw_call.pos, text_draw_call.origin,
             text_draw_call.rotation, text_draw_call.font_size, text_draw_call.spacing, text_draw_call.tint);
+    }break;
+    case DRAW_CALL_KIND_CUSTOM: {
+        custom_draw_call_t custom_draw_call = draw_call.as.custom;
+
+        if (custom_draw_call.proc == NULL) {
+            return;
+        }
+
+        custom_draw_call.proc(custom_draw_call.data);
     }break;
     default: {
         assert(0 && "Unknown draw call");

@@ -52,6 +52,8 @@
 #define COLOR_MAGENTA    (color_t) { 255, 0, 255, 255 }
 #define COLOR_RAYWHITE   (color_t) { 245, 245, 245, 255 }
 
+typedef float angle_t;
+
 typedef struct vec2f_t {
     float x;
     float y;
@@ -63,6 +65,17 @@ typedef struct rectf_t {
 } rectf_t;
 
 typedef rectf_t aabb_t;
+
+typedef struct obb_t {
+    rectf_t rect;
+    angle_t rotation;
+} obb_t;
+
+typedef struct obb_corners_t {
+    vec2f_t corners[4];
+} obb_corners_t;
+
+// int x = sizeof(obb_t);
 
 typedef struct circle_t {
     vec2f_t center;
@@ -83,6 +96,12 @@ typedef struct ring_t {
     float start_angle;
     float end_angle;
 } ring_t;
+
+typedef struct triangle_t {
+    vec2f_t point0;
+    vec2f_t point1;
+    vec2f_t point2;
+} triangle_t;
 
 typedef struct color_t {
     uint8_t r;
@@ -146,9 +165,15 @@ color_t color_lerpf(color_t a, color_t b, float t);
 
 bool check_collision_aabb_aabb(aabb_t a, aabb_t b);
 bool check_collision_aabb_point(aabb_t aabb, vec2f_t point);
+// TODO: test this
 bool check_collision_aabb_circle(aabb_t aabb, circle_t circle);
 bool check_collision_circle_circle(circle_t a, circle_t b);
 bool check_collision_circle_point(circle_t circle, vec2f_t point);
+bool check_collision_obb_obb(obb_t a, obb_t b);
+
+aabb_t circle_bounding_box(circle_t circle);
+aabb_t obb_bounding_box(obb_t obb);
+obb_corners_t get_obb_corners(obb_t obb);
 
 /////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Physics //////////////////////////////////

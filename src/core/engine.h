@@ -125,12 +125,20 @@ typedef struct text_draw_call_t {
     color_t tint;
 } text_draw_call_t;
 
+typedef void(*custom_draw_call_proc_t)(void *data);
+
+typedef struct custom_draw_call_t {
+    custom_draw_call_proc_t proc;
+    void *data;
+} custom_draw_call_t;
+
 typedef enum draw_call_kind_t {
     DRAW_CALL_KIND_RECT = 0,
     DRAW_CALL_CIRCLE_SECTOR,
     DRAW_CALL_RING,
     DRAW_CALL_KIND_TEXTURE,
     DRAW_CALL_KIND_TEXT,
+    DRAW_CALL_KIND_CUSTOM,
 } draw_call_kind_t;
 
 typedef union draw_call_as_t {
@@ -139,6 +147,7 @@ typedef union draw_call_as_t {
     ring_draw_call_t ring;
     texture_draw_call_t texture;
     text_draw_call_t text;
+    custom_draw_call_t custom;
 } draw_call_as_t;
 
 typedef struct draw_call_t {
@@ -269,5 +278,6 @@ bool cuc_engine_draw_circle_sector(room_index_t room_index, circle_sector_t circ
 bool cuc_engine_draw_ring(room_index_t room_index, ring_t ring, color_t color);
 bool cuc_engine_draw_texture(room_index_t room_index, texture_index_t texture_index, rectf_t src, rectf_t dest, vec2f_t origin, float rotation);
 bool cuc_engine_draw_text(room_index_t room_index, font_index_t font_index, const char *text, vec2f_t pos, vec2f_t origin, float rotation, float font_size, float spacing, color_t tint);
+bool cuc_engine_draw_custom(room_index_t room_index, custom_draw_call_proc_t proc, void *data);
 
 #endif // _CUC_ENGINE_H_

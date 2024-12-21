@@ -1,0 +1,74 @@
+===============================================================================
+EXTENSION NAME : linecounter
+EXTENSION VERSION : 0.2.7
+-------------------------------------------------------------------------------
+count time : 2024-12-21 16:44:26
+count workspace : h:\HALM games studio\games\Clean Up Crew
+total files : 50
+total code lines : 16053
+total comment lines : 46504
+total blank lines : 3723
+
+    statistics
+   |      extension|     total code|  total comment|    total blank|percent|
+   -------------------------------------------------------------------------
+   |             .c|           2738|             99|            786|     17|
+   |         .cucbf|              1|              0|              0| 0.0062|
+   |             .h|          12870|           3906|           2897|     80|
+   |           .txt|              0|              0|              1|    0.0|
+   |            .py|             94|              0|             27|   0.59|
+   |               |             18|              0|              4|   0.11|
+   |            .js|             32|              0|              8|   0.20|
+   |           .pdf|            300|          42499|              0|    1.9|
+   -------------------------------------------------------------------------
+.gitignore, code is 1, comment is 0, blank is 0.
+a.out, it is a binary file.
+bin\debug\CUC.exe, it is a binary file.
+build.py, code is 94, comment is 0, blank is 27.
+example.c, code is 31, comment is 0, blank is 10.
+external\enet\enet.h, code is 4447, comment is 546, blank is 1121.
+external\raylib\libraylib.a, it is a binary file.
+external\raylib\libraylibdll.a, it is a binary file.
+external\raylib\linux\libraylib.a, it is a binary file.
+external\raylib\linux\libraylib.so, it is a binary file.
+external\raylib\linux\libraylib.so.5.5.0, it is a binary file.
+external\raylib\linux\libraylib.so.550, it is a binary file.
+external\raylib\raylib.dll, it is a binary file.
+external\raylib\raylib.h, code is 1266, comment is 1365, blank is 153.
+external\raylib\raymath.h, code is 2064, comment is 343, blank is 571.
+external\raylib\rlgl.h, code is 3666, comment is 1456, blank is 740.
+external\raylib\windows\libraylib.a, it is a binary file.
+external\raylib\windows\libraylibdll.a, it is a binary file.
+external\raylib\windows\raylib.dll, it is a binary file.
+LICENSE, code is 17, comment is 0, blank is 4.
+raylib.dll, it is a binary file.
+raylib_cheatsheet_v5.0.pdf, code is 300, comment is 42499, blank is 0.
+README.txt, code is 0, comment is 0, blank is 1.
+resources\fonts\ARS.ttf, it is a binary file.
+resources\fonts\DejaVuSans.ttf, it is a binary file.
+resources\imgs\test.png, it is a binary file.
+resources\sounds\test.wav, it is a binary file.
+rrr.h, code is 248, comment is 7, blank is 64.
+screenshot000.png, it is a binary file.
+screenshot001.png, it is a binary file.
+screenshot002.png, it is a binary file.
+screenshot003.png, it is a binary file.
+screenshot004.png, it is a binary file.
+screenshot005.png, it is a binary file.
+src\core\bfs.h, code is 76, comment is 2, blank is 32.
+src\core\class Weapon {.js, code is 32, comment is 0, blank is 8.
+src\core\cuc_utils.c, code is 360, comment is 28, blank is 119.
+src\core\cuc_utils.h, code is 160, comment is 7, blank is 30.
+src\core\engine.c, code is 860, comment is 16, blank is 260.
+src\core\engine.h, code is 234, comment is 4, blank is 46.
+src\main.c, code is 260, comment is 13, blank is 76.
+src\platform\pc\pc.c, code is 1009, comment is 40, blank is 248.
+src\platform\platform.h, code is 311, comment is 145, blank is 34.
+test.c, code is 52, comment is 1, blank is 17.
+test.cucbf, code is 1, comment is 0, blank is 0.
+test.exe, it is a binary file.
+test.png, it is a binary file.
+tools\bin\debug\editor.exe, it is a binary file.
+tools\editor\src\editor.c, code is 166, comment is 1, blank is 56.
+tools\editor\src\imgui.h, code is 398, comment is 31, blank is 106.
+===============================================================================
