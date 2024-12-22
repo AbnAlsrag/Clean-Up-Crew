@@ -15,11 +15,11 @@ double get_elapsed_time(timer_t timer) {
     return platform_get_time() - timer.start_time;
 }
 
-float deg_to_radf(float angle) {
+angle_t deg_to_radf(angle_t angle) {
     return (angle * PI / 180.0f);
 }
 
-float rad_to_degf(float angle) {
+angle_t rad_to_degf(angle_t angle) {
     return (angle * 180.0f / PI);
 }
 
@@ -43,7 +43,7 @@ float inv_lerpf(float a, float b, float v) {
     return (v - a) / (b - a);
 }
 
-float lerp_angle(float start_angle, float target_angle, float t) {
+angle_t lerp_angle(angle_t start_angle, angle_t target_angle, float t) {
     float delta = fmodf(target_angle - start_angle + 180.0f, 360.0f) - 180.0f;
     if (delta < -180.0f) {
         delta += 360.0f;
@@ -106,18 +106,18 @@ float vec2f_direction(vec2f_t a, vec2f_t b) {
     return rad_to_degf(atan2f(b.y - a.y, b.x - a.x));
 }
 
-float vec2f_angle(vec2f_t vec) {
+angle_t vec2f_angle(vec2f_t vec) {
     if (vec.x == 0.0f && vec.y == 0.0f) return 0.0f;
     return rad_to_degf(atan2f(vec.y, vec.x));
 }
 
-vec2f_t vec2f_set_angle(vec2f_t vec, float angle) {
+vec2f_t vec2f_set_angle(vec2f_t vec, angle_t angle) {
     vec2f_t polar = vec2f_cartesian2polar(vec);
     polar.y = angle;
     return vec2f_polar2cartesian(polar);
 }
 
-vec2f_t vec2f_rotate(vec2f_t vec, float angle) {
+vec2f_t vec2f_rotate(vec2f_t vec, angle_t angle) {
     vec2f_t polar = vec2f_cartesian2polar(vec);
     polar.y += angle;
     return vec2f_polar2cartesian(polar);
@@ -179,6 +179,14 @@ vec2f_t vec2f_opposite(vec2f_t vec) {
     return (vec2f_t) { -vec.x, -vec.y };
 }
 
+vec2f_t vec2f_perpendicular(vec2f_t vec) {
+    return (vec2f_t) { -vec.y, vec.x };
+}
+
+vec2f_t vec2f_perpendicular_clockwise(vec2f_t vec) {
+    return (vec2f_t) { vec.y, -vec.x };
+}
+
 vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max) {
     vec2f_t result = { .x = clampf(vec.x, min.x, max.x), .y = clampf(vec.y, min.y, max.y) };
     return result;
@@ -231,6 +239,15 @@ vec2f_t vec2f_cartesian2polar(vec2f_t vec) {
 
 vec2f_t vec2f_polar2cartesian(vec2f_t vec) {
     return (vec2f_t) { vec.x * cosf(deg_to_radf(vec.y)), vec.x * sinf(deg_to_radf(vec.y)) };
+}
+
+// NOTE: i am not sure about always normalizing the axis
+float vec2f_project_on_axis(vec2f_t vec, vec2f_t axis) {
+    return vec2f_dot_product(vec, vec2f_normalize(axis));
+}
+
+vec2f_t vec2f_get_projected_point_on_axis(vec2f_t vec, vec2f_t axis) {
+    return vec2f_lerp(vec, vec2f_normalize(axis), vec2f_project_on_axis(vec, axis));
 }
 
 rectf_t rectf_scale(rectf_t rect, float scalar) {
@@ -325,6 +342,19 @@ bool check_collision_circle_point(circle_t circle, vec2f_t point) {
         (point.y - circle.center.y)*(point.y - circle.center.y);
 
     return (distance_squared <= (circle.radius*circle.radius));
+}
+
+bool check_collision_obb_obb(obb_t a, obb_t b) {
+    obb_corners_t a_corners = get_obb_corners(a);
+    obb_corners_t b_corners = get_obb_corners(b);
+    
+    sat_t a_sat = { .vertices = a_corners.corners, .vertex_count = 4 };
+    sat_t b_sat = { .vertices = b_corners.corners, .vertex_count = 4 };
+    return check_collision_sat(a_sat, b_sat);
+}
+
+bool check_collision_sat(sat_t a, sat_t b) {
+
 }
 
 aabb_t circle_bounding_box(circle_t circle) {

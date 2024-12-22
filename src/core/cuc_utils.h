@@ -77,6 +77,11 @@ typedef struct obb_corners_t {
 
 // int x = sizeof(obb_t);
 
+typedef struct sat_t {
+    vec2f_t *vertices;
+    size_t vertex_count;
+} sat_t;
+
 typedef struct circle_t {
     vec2f_t center;
     float radius;
@@ -119,12 +124,12 @@ timer_t start_timer(double lifetime);
 bool is_timer_finished(timer_t timer);
 double get_elapsed_time(timer_t timer);
 
-float deg_to_radf(float angle);
-float rad_to_degf(float angle);
+angle_t deg_to_radf(angle_t angle);
+angle_t rad_to_degf(angle_t angle);
 float clampf(float value, float min, float max);
 float lerpf(float a, float b, float t);
 float inv_lerpf(float a, float b, float v);
-float lerp_angle(float start_angle, float target_angle, float t);
+angle_t lerp_angle(angle_t start_angle, angle_t target_angle, float t);
 float remapf(float imin, float imax, float omin, float omax, float v);
 
 vec2f_t vec2f_add(vec2f_t a, vec2f_t b);
@@ -137,15 +142,17 @@ vec2f_t vec2f_div(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_div_value(vec2f_t a, float b);
 float vec2f_dot_product(vec2f_t a, vec2f_t b);
 vec2f_t vec2f_opposite(vec2f_t vec);
+vec2f_t vec2f_perpendicular(vec2f_t vec);
+vec2f_t vec2f_perpendicular_clockwise(vec2f_t vec);
 vec2f_t vec2f_clamp(vec2f_t vec, vec2f_t min, vec2f_t max);
 vec2f_t vec2f_clamp_value(vec2f_t vec, float min, float max);
 bool vec2f_equal(vec2f_t a, vec2f_t b);
 float vec2f_length(vec2f_t vec);
 float vec2f_distance(vec2f_t a, vec2f_t b);
 float vec2f_direction(vec2f_t a, vec2f_t b);
-float vec2f_angle(vec2f_t vec);
-vec2f_t vec2f_set_angle(vec2f_t vec, float angle);
-vec2f_t vec2f_rotate(vec2f_t vec, float angle);
+angle_t vec2f_angle(vec2f_t vec);
+vec2f_t vec2f_set_angle(vec2f_t vec, angle_t angle);
+vec2f_t vec2f_rotate(vec2f_t vec, angle_t angle);
 vec2f_t vec2f_wrap_rect(vec2f_t vec, rectf_t rect);
 bool vec2f_out_of_rect(vec2f_t vec, rectf_t rect);
 vec2f_t vec2f_move(vec2f_t vec, float angle, float distance);
@@ -156,6 +163,8 @@ float vec2f_inv_lerp(vec2f_t a, vec2f_t b, vec2f_t value);
 vec2f_t vec2f_slerp(vec2f_t a, vec2f_t b, float t);
 vec2f_t vec2f_cartesian2polar(vec2f_t vec);
 vec2f_t vec2f_polar2cartesian(vec2f_t vec);
+float vec2f_project_on_axis(vec2f_t vec, vec2f_t axis);
+vec2f_t vec2f_get_projected_point_on_axis(vec2f_t vec, vec2f_t axis);
 
 rectf_t rectf_scale(rectf_t rect, float scalar);
 
@@ -170,6 +179,7 @@ bool check_collision_aabb_circle(aabb_t aabb, circle_t circle);
 bool check_collision_circle_circle(circle_t a, circle_t b);
 bool check_collision_circle_point(circle_t circle, vec2f_t point);
 bool check_collision_obb_obb(obb_t a, obb_t b);
+bool check_collision_sat(sat_t a, sat_t b);
 
 aabb_t circle_bounding_box(circle_t circle);
 aabb_t obb_bounding_box(obb_t obb);

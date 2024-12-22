@@ -29,7 +29,7 @@ float player_size = 100.0f;
 
 char health0_string[] = "health: 0";
 char health1_string[] = "health: 0";
-physics_object_t player0 = { .pos = { 200, 300 }, .mass = 1.0f };
+physics_object_t player0 = { .pos = { 200, 300 }, .mass = 5000.0f };
 int player0_health = 5;
 int player0_lives = 5;
 float player0_angle = 0.0f;
@@ -107,9 +107,6 @@ void update_game(void) {
     rectf_t player1_rect = (rectf_t) { player1.pos.x, player1.pos.y, player_size, player_size };
     rectf_t player1_barrel = { player1.pos.x, player1.pos.y, 30, 10 };
 
-    circle_t player0_circle = (circle_t) { .center = { player0.pos.x, player0.pos.y }, player_radius };
-    circle_t player1_circle = (circle_t) { .center = { player1.pos.x, player1.pos.y }, player_radius };
-
     if (player0_health <= 0) {
         winner = 2;
         player0_lives -= 1;
@@ -118,10 +115,6 @@ void update_game(void) {
     if (player1_health <= 0) {
         winner = 1;
         player1_lives -= 1;
-    }
-
-    if (check_collision_circle_circle(player0_circle, player1_circle)) {
-        physics_resolve_circle_collision(&player0, &player1, 1.0f);
     }
 
     vec2f_t player0_move_axis = (vec2f_t) { platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_X), platform_get_gamepad_axis(0, PLATFORM_GAMEPAD_AXIS_LEFT_Y) };
@@ -226,6 +219,18 @@ void update_game(void) {
     health1_string[8] = player1_health+'0';
     cuc_engine_draw_text(0, font, health1_string, (vec2f_t) { platform_get_window_size().x-200, 20 }, VECTOR2_ZERO, 0.0f, 46, 1.0f, COLOR_RED);
 
+    vec2f_t player0_move_force = vec2f_mult_value(player0_move_axis, player_acceleration);
+    vec2f_t player1_move_force = vec2f_mult_value(player1_move_axis, player_acceleration);
+
+    physics_apply_force(&player0, player0_move_force);
+    physics_apply_force(&player1, player1_move_force);
+
+    physics_update_obj(&player0, dt);
+    physics_update_obj(&player1, dt);
+
+    circle_t player0_circle = (circle_t) { .center = { player0.pos.x, player0.pos.y }, player_radius };
+    circle_t player1_circle = (circle_t) { .center = { player1.pos.x, player1.pos.y }, player_radius };
+
     for (size_t i = 0; i < BULLET_COUNT; i++) {
         if (player0_bullets[i].active) {
             physics_update_obj(&player0_bullets[i].obj, dt);
@@ -270,14 +275,9 @@ void update_game(void) {
         }
     }
 
-    vec2f_t player0_move_force = vec2f_mult_value(player0_move_axis, player_acceleration);
-    vec2f_t player1_move_force = vec2f_mult_value(player1_move_axis, player_acceleration);
-
-    physics_apply_force(&player0, player0_move_force);
-    physics_apply_force(&player1, player1_move_force);
-
-    physics_update_obj(&player0, dt);
-    physics_update_obj(&player1, dt);
+    if (check_collision_circle_circle(player0_circle, player1_circle)) {
+        physics_resolve_circle_collision(&player0, &player1, 0.1f);
+    }
 
     player0.pos = vec2f_wrap_rect(player0.pos, window_rect);
     player1.pos = vec2f_wrap_rect(player1.pos, window_rect);
