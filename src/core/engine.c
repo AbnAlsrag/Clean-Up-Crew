@@ -90,6 +90,9 @@ void cuc_engine_run(void) {
     }
 }
 
+obb_t a = { .rect = { 100, 100, 100, 100 }, 0.0f };
+obb_t b = { .rect = { 100, 300, 100, 100 }, 0.0f };
+
 void cuc_engine_update(void) {
     if (!platform_running()) {
         engine.quit = true;
@@ -106,26 +109,69 @@ void cuc_engine_update(void) {
 
     platform_begin_drawing();
     platform_clear_background(engine.clear_color);
-    for (size_t i = 0; i < engine.splitscreen_count; i++) {
-        splitscreen_t *splitscreen = &engine.splitscreens[i];
-        entity_t *player_entity = &engine.entities[splitscreen->player.index];
-        room_t *player_room = cuc_engine_get_room(player_entity->room);
+    // for (size_t i = 0; i < engine.splitscreen_count; i++) {
+    //     splitscreen_t *splitscreen = &engine.splitscreens[i];
+    //     entity_t *player_entity = &engine.entities[splitscreen->player.index];
+    //     room_t *player_room = cuc_engine_get_room(player_entity->room);
 
-        // uint32_t width = splitscreen->viewport.width;
-        // uint32_t height = splitscreen->viewport.height;
+    //     // uint32_t width = splitscreen->viewport.width;
+    //     // uint32_t height = splitscreen->viewport.height;
 
-        platform_begin_viewport(splitscreen->viewport);
-        platform_begin_camera(splitscreen->player.camera);
-            platform_clear_background(engine.clear_color);
-            // platform_clear_background(COLOR_RED);
-            draw_room(player_entity->room);
-            for (size_t connection = 0; connection < player_room->connections_count; connection++) {
-                draw_room(player_room->connections[connection].index);
-            }
-        platform_end_camera();
-        platform_end_viewport();
-    }
+    //     platform_begin_viewport(splitscreen->viewport);
+    //     platform_begin_camera(splitscreen->player.camera);
+    //         platform_clear_background(engine.clear_color);
+    //         // platform_clear_background(COLOR_RED);
+    //         draw_room(player_entity->room);
+    //         for (size_t connection = 0; connection < player_room->connections_count; connection++) {
+    //             draw_room(player_room->connections[connection].index);
+    //         }
+    //     platform_end_camera();
+    //     platform_end_viewport();
+    // }
         // platform_draw_fps((vec2f_t) { 0, 0 });
+
+        const float rotating_speed = 0.5f;
+        const float speed = 1.0f;
+
+        if (platform_is_key_down(PLATFORM_KEYCODE_D)) {
+            a.rotation += rotating_speed;
+        } else if (platform_is_key_down(PLATFORM_KEYCODE_A)) {
+            a.rotation -= rotating_speed;
+        }
+
+        if (platform_is_key_down(PLATFORM_KEYCODE_W)) {
+            vec2f_t direction = vec2f_set_angle(VECTOR2_RIGHT, a.rotation);
+            a.rect.x += direction.x * speed;
+            a.rect.y += direction.y * speed;
+        } else if (platform_is_key_down(PLATFORM_KEYCODE_S)) {
+            vec2f_t direction = vec2f_set_angle(VECTOR2_RIGHT, a.rotation);
+            a.rect.x += direction.x * -speed;
+            a.rect.y += direction.y * -speed;
+        }
+
+        if (platform_is_key_down(PLATFORM_KEYCODE_RIGHT)) {
+            b.rotation += rotating_speed;
+        } else if (platform_is_key_down(PLATFORM_KEYCODE_LEFT)) {
+            b.rotation -= rotating_speed;
+        }
+
+        if (platform_is_key_down(PLATFORM_KEYCODE_UP)) {
+            vec2f_t direction = vec2f_set_angle(VECTOR2_RIGHT, b.rotation);
+            b.rect.x += direction.x * speed;
+            b.rect.y += direction.y * speed;
+        } else if (platform_is_key_down(PLATFORM_KEYCODE_DOWN)) {
+            vec2f_t direction = vec2f_set_angle(VECTOR2_RIGHT, b.rotation);
+            b.rect.x += direction.x * -speed;
+            b.rect.y += direction.y * -speed;
+        }
+
+        platform_draw_rect(a.rect, rectf_center_offset(a.rect), a.rotation, COLOR_RED);
+        platform_draw_rect(b.rect, rectf_center_offset(b.rect), b.rotation, COLOR_BLUE);
+
+        if (check_collision_obb_obb(a, b)) {
+            platform_draw_text(platform_get_default_font(), "COLLISION", (vec2f_t) { 0, 0 }, VECTOR2_ZERO, 0.0f, 56, 1.0f, COLOR_RED);
+        }
+
     platform_end_drawing();
 
     for (size_t i = 0; i < MAX_ROOMS; i++) {

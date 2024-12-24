@@ -2,6 +2,7 @@
 #include "platform/platform.h"
 
 #include <math.h>
+#include <float.h>
 
 timer_t start_timer(double lifetime) {
     return (timer_t) { .start_time = platform_get_time(), .lifetime = lifetime };
@@ -85,6 +86,10 @@ vec2f_t vec2f_div(vec2f_t a, vec2f_t b) {
     return (vec2f_t) { a.x / b.x, a.y / b.y };
 }
 
+vec2f_t vec2f_div_value(vec2f_t a, float b) {
+    return (vec2f_t) { a.x / b, a.y / b };
+}
+
 bool vec2f_equal(vec2f_t a, vec2f_t b) {
     bool result = ((fabsf(a.x - b.x)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(a.x), fabsf(b.x))))) &&
                 ((fabsf(a.y - b.y)) <= (EPSILON*fmaxf(1.0f, fmaxf(fabsf(a.y), fabsf(b.y)))));
@@ -165,10 +170,6 @@ vec2f_t vec2f_move_towards(vec2f_t start, vec2f_t target, float distance) {
 
     float angle = vec2f_direction(start, target);
     return vec2f_move(start, angle, distance);
-}
-
-vec2f_t vec2f_div_value(vec2f_t a, float b) {
-    return (vec2f_t) { a.x / b, a.y / b };
 }
 
 float vec2f_dot_product(vec2f_t a, vec2f_t b) {
@@ -259,6 +260,10 @@ rectf_t rectf_scale(rectf_t rect, float scalar) {
     result.height = rect.height * scalar;
 
     return result;
+}
+
+vec2f_t rectf_center_offset(rectf_t rect) {
+    return (vec2f_t) { rect.width/2, rect.height/2 };
 }
 
 color_t color_from_u32(uint32_t value) {
@@ -353,8 +358,86 @@ bool check_collision_obb_obb(obb_t a, obb_t b) {
     return check_collision_sat(a_sat, b_sat);
 }
 
-bool check_collision_sat(sat_t a, sat_t b) {
+void project_sat(sat_t a, vec2f_t axis, float *out_min, float *out_max) {
+    if (a.vertex_count == 0) {
+        return;
+    }
 
+    vec2f_t used_axis = vec2f_normalize(axis);
+    
+    float projection = vec2f_dot_product(a.vertices[0], used_axis);
+    float min = projection;
+    float max = projection;
+    for (size_t i = 1; i < a.vertex_count; i++) {
+        projection = vec2f_dot_product(a.vertices[i], used_axis);
+        if (projection < min) {
+            min = projection;
+        }
+
+        if (projection > max) {
+            max = projection;
+        }
+    }
+
+    if (out_min != NULL) {
+        *out_min = min;
+    }
+
+    if (out_max != NULL) {
+        *out_max = max;
+    }
+}
+
+// NOTE: THIS FUNCTION ONLY WORKS WITH CLOCKWISE POLYGONS FOR SOME REASON
+bool check_collision_sat(sat_t a, sat_t b) {
+    if (a.vertex_count < 2) {
+        return false;
+    }
+
+    if (b.vertex_count < 2) {
+        return false;
+    }
+    
+    for (size_t i = 0; i < a.vertex_count; i++) {
+        vec2f_t edge = vec2f_sub(a.vertices[(i+1)%a.vertex_count], a.vertices[i]);
+        // vec2f_t edge = vec2f_sub(a.vertices[i], a.vertices[(i+1)%a.vertex_count]);
+        vec2f_t axis = vec2f_perpendicular(edge);
+        // vec2f_t axis = vec2f_perpendicular_clockwise(edge);
+        // axis = vec2f_normalize(axis);
+
+        float a_max = FLT_MAX;
+        float a_min = -FLT_MAX;
+        float b_max = FLT_MAX;
+        float b_min = -FLT_MAX;
+
+        project_sat(a, axis, &a_min, &a_max);
+        project_sat(b, axis, &b_min, &b_max);
+
+        if (a_max < b_min || b_max < a_min) {
+            return false;
+        }
+    }
+
+    for (size_t i = 0; i < b.vertex_count; i++) {
+        vec2f_t edge = vec2f_sub(b.vertices[(i+1)%b.vertex_count], b.vertices[i]);
+        // vec2f_t edge = vec2f_sub(b.vertices[i], b.vertices[(i+1)%b.vertex_count]);
+        vec2f_t axis = vec2f_perpendicular(edge);
+        // vec2f_t axis = vec2f_perpendicular_clockwise(edge);
+
+        float a_max = FLT_MAX;
+        float a_min = -FLT_MAX;
+        float b_max = FLT_MAX;
+        float b_min = -FLT_MAX;
+
+        project_sat(a, axis, &a_min, &a_max);
+        project_sat(b, axis, &b_min, &b_max);
+
+        if (a_max < b_min || b_max < a_min) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 aabb_t circle_bounding_box(circle_t circle) {
@@ -426,11 +509,17 @@ obb_corners_t get_obb_corners(obb_t obb) {
     vec2f_t half_extents = (vec2f_t) { obb.rect.width / 2, obb.rect.height / 2 };
 
     // Calculate unrotated corner offsets from center
+    // vec2f_t offsets[4] = {
+    //     { -half_extents.x, -half_extents.y }, // Top-left
+    //     { -half_extents.x,  half_extents.y }, // Bottom-left
+    //     {  half_extents.x, -half_extents.y }, // Top-right
+    //     {  half_extents.x,  half_extents.y }, // Bottom-right
+    // };
     vec2f_t offsets[4] = {
         { -half_extents.x, -half_extents.y }, // Top-left
+        {  half_extents.x,  half_extents.y }, // Bottom-right
         { -half_extents.x,  half_extents.y }, // Bottom-left
         {  half_extents.x, -half_extents.y }, // Top-right
-        {  half_extents.x,  half_extents.y }  // Bottom-right
     };
 
     // Rotate each corner offset and translate back to center

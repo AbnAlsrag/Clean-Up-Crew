@@ -7,7 +7,8 @@
 // TODO: namespace everything in cuc_utils or something else
 
 #ifndef EPSILON
-#define EPSILON 0.000001f
+// #define EPSILON 0.000001f
+#define EPSILON 1e-6
 #endif
 
 #ifndef PI
@@ -167,6 +168,7 @@ float vec2f_project_on_axis(vec2f_t vec, vec2f_t axis);
 vec2f_t vec2f_get_projected_point_on_axis(vec2f_t vec, vec2f_t axis);
 
 rectf_t rectf_scale(rectf_t rect, float scalar);
+vec2f_t rectf_center_offset(rectf_t rect);
 
 color_t color_from_u32(uint32_t value);
 uint32_t color_to_u32(color_t color);

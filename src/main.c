@@ -284,11 +284,18 @@ void update_game(void) {
 
     cuc_engine_set_current_draw_layer(PLAYERS_LAYER);
 
-    cuc_engine_draw_rect(0, player0_rect, player_center, player0_angle, COLOR_BLUE);
+    obb_t player0_obb = (obb_t) { .rect = player0_rect, .rotation = player0_angle };
+    obb_t player1_obb = (obb_t) { .rect = player1_rect, .rotation = player1_angle };
+
+    cuc_engine_draw_rect(0, player0_obb.rect, player_center, player0_obb.rotation, COLOR_BLUE);
     cuc_engine_draw_rect(0, player0_barrel, player_barrel_offset, player0_angle, COLOR_GREEN);
 
-    cuc_engine_draw_rect(0, player1_rect, player_center, player1_angle, COLOR_RED);
+    cuc_engine_draw_rect(0, player1_obb.rect, player_center, player1_obb.rotation, COLOR_RED);
     cuc_engine_draw_rect(0, player1_barrel, player_barrel_offset, player1_angle, COLOR_GREEN);
+
+    if (check_collision_obb_obb(player0_obb, player1_obb)) {
+        cuc_engine_draw_text(0, font, "COLLIDING", (vec2f_t) { 0.0f, 50.0f }, VECTOR2_ZERO, 0.0f, 56, 1.0f, COLOR_RED);
+    }
 }
 
 void manger(entity_index_t manger_entity_index) {
